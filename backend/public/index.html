@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eidolon Prototype</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }
+        section { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+        .dynamic-field { border-left: 3px solid #007bff; padding-left: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Eidolon Prototype</h1>
+
+    <!-- Manager Section -->
+    <section>
+        <h2>Manager: Define Article & Schema</h2>
+        <div class="form-group">
+            <label>Organization</label>
+            <input type="text" id="mgr-org" value="Acme Corp">
+        </div>
+        <div class="form-group">
+            <label>Article Name</label>
+            <input type="text" id="mgr-name" placeholder="e.g. Steel Pipe">
+        </div>
+        <div class="form-group">
+            <label>Shopfloor Schema (JSON Definition)</label>
+            <small>Define the fields the operator must fill in.</small>
+            <textarea id="mgr-schema" rows="10">[
+  {
+    "key": "measured_weight",
+    "label": "Measured Weight (kg)",
+    "type": "number",
+    "validation": { "required": true, "min": 10, "max": 100 }
+  },
+  {
+    "key": "quality_check",
+    "label": "Quality Check Passed?",
+    "type": "select",
+    "validation": { "options": ["Yes", "No"], "required": true }
+  }
+]</textarea>
+        </div>
+        <button onclick="createArticle()">Create Article</button>
+        <pre id="mgr-output"></pre>
+    </section>
+
+    <!-- Shopfloor Section -->
+    <section>
+        <h2>Shopfloor: Data Collection</h2>
+        <div class="form-group">
+            <label>Organization</label>
+            <input type="text" id="sf-org" value="Acme Corp">
+            <button onclick="loadShopfloorArticles()" style="margin-top: 5px; background-color: #6c757d;">Load Articles</button>
+        </div>
+        
+        <div class="form-group">
+            <label>Select Article</label>
+            <select id="sf-article-select" onchange="renderShopfloorForm()">
+                <option value="">-- Select an Article --</option>
+            </select>
+        </div>
+
+        <!-- Dynamic Form Container -->
+        <div id="sf-dynamic-form"></div>
+
+        <button onclick="registerEntry()" style="margin-top: 20px;">Register Entry</button>
+        <pre id="sf-output"></pre>
+    </section>
+
+    <script>
+        let currentArticles = [];
+        let currentSchema = [];
+
+        // --- Manager Functions ---
+
+        async function createArticle() {
+            const org = document.getElementById('mgr-org').value;
+            const name = document.getElementById('mgr-name').value;
+            let schema = [];
+            
+            try {
+                schema = JSON.parse(document.getElementById('mgr-schema').value);
+            } catch (e) {
+                alert("Invalid JSON in Schema");
+                return;
+            }
+
+            const payload = {
+                organization: org,
+                name: name,
+                status: "active",
+                shopFloorSchema: schema, // Sending the schema definition
+                attributeSchema: [] // Empty for now
+            };
+
+            const res = await fetch('/api/articles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            document.getElementById('mgr-output').textContent = JSON.stringify(data, null, 2);
+            
+            // Refresh shopfloor list if org matches
+            if (document.getElementById('sf-org').value === org) {
+                loadShopfloorArticles();
+            }
+        }
+
+        // --- Shopfloor Functions ---
+
+        async function loadShopfloorArticles() {
+            const org = document.getElementById('sf-org').value;
+            const res = await fetch(`/api/articles?organization=${org}&status=active`);
+            const data = await res.json();
+            currentArticles = data.articles;
+            
+            const select = document.getElementById('sf-article-select');
+            select.innerHTML = '<option value="">-- Select an Article --</option>';
+            
+            currentArticles.forEach(article => {
+                const option = document.createElement('option');
+                option.value = article.id;
+                option.text = article.name;
+                select.add(option);
+            });
+            
+            document.getElementById('sf-dynamic-form').innerHTML = '';
+        }
+
+        function renderShopfloorForm() {
+            const articleId = document.getElementById('sf-article-select').value;
+            const container = document.getElementById('sf-dynamic-form');
+            container.innerHTML = '';
+
+            const article = currentArticles.find(a => a.id === articleId);
+            if (!article || !article.shopFloorSchema) return;
+
+            currentSchema = article.shopFloorSchema;
+
+            // Generate HTML for each field in the schema
+            currentSchema.forEach(field => {
+                const div = document.createElement('div');
+                div.className = 'form-group dynamic-field';
+                
+                const label = document.createElement('label');
+                label.textContent = field.label;
+                div.appendChild(label);
+
+                let input;
+                if (field.type === 'select') {
+                    input = document.createElement('select');
+                    input.id = `field-${field.key}`;
+                    field.validation.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.text = opt;
+                        input.add(option);
+                    });
+                } else {
+                    input = document.createElement('input');
+                    input.id = `field-${field.key}`;
+                    input.type = field.type === 'number' ? 'number' : 'text';
+                }
+                
+                div.appendChild(input);
+                container.appendChild(div);
+            });
+        }
+
+        async function registerEntry() {
+            const articleId = document.getElementById('sf-article-select').value;
+            const org = document.getElementById('sf-org').value;
+
+            if (!articleId) {
+                alert("Please select an article");
+                return;
+            }
+
+            // Collect data from dynamic inputs
+            const collectedData = {};
+            currentSchema.forEach(field => {
+                const input = document.getElementById(`field-${field.key}`);
+                let value = input.value;
+                
+                if (field.type === 'number') {
+                    value = value === '' ? null : Number(value);
+                }
+                
+                collectedData[field.key] = value;
+            });
+
+            const res = await fetch('/api/entries', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    articleId, 
+                    organization: org, 
+                    data: collectedData 
+                })
+            });
+            
+            const result = await res.json();
+            
+            if (res.ok) {
+                document.getElementById('sf-output').textContent = "Success:\n" + JSON.stringify(result, null, 2);
+                document.getElementById('sf-output').style.color = "green";
+            } else {
+                document.getElementById('sf-output').textContent = "Error:\n" + JSON.stringify(result, null, 2);
+                document.getElementById('sf-output').style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>
