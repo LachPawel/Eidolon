@@ -26,21 +26,23 @@
     <!-- Manager Section -->
     <section>
         <h2>Manager: Define Article & Schema</h2>
-        <div class="form-group">
-            <label>Organization</label>
-            <input type="text" id="mgr-org" value="Acme Corp">
-        </div>
-        <div class="form-group">
-            <label>Article Name</label>
-            <input type="text" id="mgr-name" placeholder="e.g. Steel Pipe">
-        </div>
-        <div class="form-group">
-            <label>Shopfloor Schema (Dynamic Fields)</label>
-            <small>Define the fields the operator must fill in.</small>
-            <div id="schema-builder"></div>
-            <button onclick="addSchemaField()" style="margin-top: 10px; background-color: #28a745;">+ Add Field</button>
-        </div>
-        <button onclick="createArticle()">Create Article</button>
+        <form id="manager-form" onsubmit="createArticle(event)">
+            <div class="form-group">
+                <label>Organization</label>
+                <input type="text" id="mgr-org" value="Acme Corp" required>
+            </div>
+            <div class="form-group">
+                <label>Article Name</label>
+                <input type="text" id="mgr-name" placeholder="e.g. Steel Pipe" required>
+            </div>
+            <div class="form-group">
+                <label>Shop Floor Schema (Dynamic Fields)</label>
+                <small>Define the fields the operator must fill in.</small>
+                <div id="schema-builder"></div>
+                <button type="button" onclick="addSchemaField()" style="margin-top: 10px; background-color: #28a745;">+ Add Field</button>
+            </div>
+            <button type="submit">Create Article</button>
+        </form>
         <pre id="mgr-output"></pre>
     </section>
 
@@ -83,7 +85,7 @@
             div.innerHTML = `
                 <div style="flex: 2">
                     <label>Label</label>
-                    <input type="text" class="field-label" placeholder="e.g. Weight" oninput="updateKey(this, '${id}')">
+                    <input type="text" class="field-label" placeholder="e.g. Weight" oninput="updateKey(this, '${id}')" required>
                 </div>
                 <div style="flex: 2">
                     <label>Key (Auto)</label>
@@ -105,9 +107,9 @@
                 <div style="flex: 2; display: none;" id="options-wrapper-${id}">
                     <label>Options</label>
                     <div id="options-list-${id}"></div>
-                    <button onclick="addOptionInput('${id}')" style="padding: 2px 5px; font-size: 12px; margin-top: 5px;">+ Add Option</button>
+                    <button type="button" onclick="addOptionInput('${id}')" style="padding: 2px 5px; font-size: 12px; margin-top: 5px;">+ Add Option</button>
                 </div>
-                <button class="remove-btn" onclick="removeField('${id}')">X</button>
+                <button type="button" class="remove-btn" onclick="removeField('${id}')">X</button>
             `;
             container.appendChild(div);
         }
@@ -118,8 +120,8 @@
             div.style.display = 'flex';
             div.style.marginBottom = '5px';
             div.innerHTML = `
-                <input type="text" class="option-value" placeholder="Value" style="flex: 1; margin-right: 5px;">
-                <button onclick="this.parentElement.remove()" style="background: #dc3545; color: white; border: none; cursor: pointer; padding: 0 5px;">x</button>
+                <input type="text" class="option-value" placeholder="Value" style="flex: 1; margin-right: 5px;" required>
+                <button type="button" onclick="this.parentElement.remove()" style="background: #dc3545; color: white; border: none; cursor: pointer; padding: 0 5px;">x</button>
             `;
             container.appendChild(div);
         }
@@ -138,19 +140,17 @@
             wrapper.style.display = select.value === 'select' ? 'block' : 'none';
         }
 
-        async function createArticle() {
+        async function createArticle(event) {
+            event.preventDefault(); // Prevent form submission
+
             const org = document.getElementById('mgr-org').value;
             const name = document.getElementById('mgr-name').value;
             
-            if (!org || !name) {
-                alert("Organization and Article Name are required.");
-                return;
-            }
-
             // Build Schema from UI
             const schema = [];
             const rows = document.querySelectorAll('.schema-field-row');
             let isValid = true;
+            const usedKeys = new Set();
             
             rows.forEach(row => {
                 if (!isValid) return;
@@ -160,11 +160,13 @@
                 const type = row.querySelector('.field-type').value;
                 const required = row.querySelector('.field-required').checked;
 
-                if (!label || !key) {
-                    alert("All fields must have a Label and Key.");
+                // Duplicate Key Check
+                if (usedKeys.has(key)) {
+                    alert(`Duplicate field key detected: '${key}'. Please use unique labels.`);
                     isValid = false;
                     return;
                 }
+                usedKeys.add(key);
 
                 const fieldDef = {
                     key,
