@@ -18,7 +18,7 @@ This repo will be divided into various branches, each representing a different c
     - Initialize a basic Express server.
     - Create an endpoint to fetch articles.
 
-- Chapter 1: Implementing Article Management
+- Chapter 1: The Foundation - Implementing Basic Article Management
     - Add CRUD operations for articles.
     - Introduce data validation for article fields.
     - Store articles in a JSON file.
