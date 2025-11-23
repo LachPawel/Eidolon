@@ -1,6 +1,6 @@
 {
   "name": "eidolon-backend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "type": "module",
   "main": "index.js",
@@ -9,7 +9,7 @@
     "dev": "node --watch index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Pawel Lach",
   "license": "ISC",
   "dependencies": {
     "express": "^5.1.0"
