@@ -18,6 +18,23 @@ This repo will be divided into various branches, each representing a different c
     - Initialize a basic Express server.
     - Create an endpoint to fetch articles.
 
+- Chapter 1: The Foundation - Implementing Basic Article Management
+    - Add CRUD operations for articles.
+    - Introduce data validation for article fields.
+    - Store articles in a JSON file.
+    - Create simple frontend to add articles, and new entries for articles (Shop Floor)
+    - Implement TypeScript for type safety.
+    - Arrange the project in the MVC pattern.
+
 ### Tech Stack (Work in Progress)
 
-- Backend: Node.js with Express
+- Backend: Node.js with Express, TypeScript
+
+### Getting Started
+
+1. Clone the repository
+2. Navigate to the backend directory: `cd backend`
+3. Install dependencies: `npm install`
+4. Build the project: `npm run build`
+5. Start the server: `npm start` or `npm run dev` for development mode
+6. Access the application at `http://localhost:3000`
