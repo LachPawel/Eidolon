@@ -6,7 +6,7 @@ import { randomUUID } from "crypto";
 class ArticlesController {
   async getArticles(req: Request, res: Response) {
     try {
-      const { organization, status } = req.query;
+      const { organization, status, search } = req.query;
       let articles = await readData("articles.json", "articles");
 
       if (typeof organization === "string")
@@ -17,6 +17,12 @@ class ArticlesController {
         articles = articles.filter(
           (article: Article) => article.status === status
         );
+      if (typeof search === "string" && search.length > 0) {
+        const lowerSearch = search.toLowerCase();
+        articles = articles.filter((article: Article) =>
+          article.name.toLowerCase().includes(lowerSearch)
+        );
+      }
 
       res.json({ articles });
     } catch (error) {
