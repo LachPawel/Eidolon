@@ -14,6 +14,10 @@
         button:hover { background-color: #0056b3; }
         pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
         .dynamic-field { border-left: 3px solid #007bff; padding-left: 10px; margin-bottom: 10px; }
+        .schema-field-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; border: 1px solid #eee; padding: 10px; border-radius: 4px; }
+        .schema-field-row input, .schema-field-row select { width: auto; flex: 1; }
+        .remove-btn { background-color: #dc3545; padding: 5px 10px; }
+        .remove-btn:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
@@ -31,22 +35,10 @@
             <input type="text" id="mgr-name" placeholder="e.g. Steel Pipe">
         </div>
         <div class="form-group">
-            <label>Shopfloor Schema (JSON Definition)</label>
+            <label>Shopfloor Schema (Dynamic Fields)</label>
             <small>Define the fields the operator must fill in.</small>
-            <textarea id="mgr-schema" rows="10">[
-  {
-    "key": "measured_weight",
-    "label": "Measured Weight (kg)",
-    "type": "number",
-    "validation": { "required": true, "min": 10, "max": 100 }
-  },
-  {
-    "key": "quality_check",
-    "label": "Quality Check Passed?",
-    "type": "select",
-    "validation": { "options": ["Yes", "No"], "required": true }
-  }
-]</textarea>
+            <div id="schema-builder"></div>
+            <button onclick="addSchemaField()" style="margin-top: 10px; background-color: #28a745;">+ Add Field</button>
         </div>
         <button onclick="createArticle()">Create Article</button>
         <pre id="mgr-output"></pre>
@@ -81,24 +73,95 @@
 
         // --- Manager Functions ---
 
+        function addSchemaField() {
+            const container = document.getElementById('schema-builder');
+            const id = Date.now();
+            const div = document.createElement('div');
+            div.className = 'schema-field-row';
+            div.id = `field-row-${id}`;
+            
+            div.innerHTML = `
+                <div style="flex: 2">
+                    <label>Label</label>
+                    <input type="text" class="field-label" placeholder="e.g. Weight" oninput="updateKey(this, '${id}')">
+                </div>
+                <div style="flex: 2">
+                    <label>Key (Auto)</label>
+                    <input type="text" class="field-key" id="key-${id}" readonly style="background: #f9f9f9">
+                </div>
+                <div style="flex: 1">
+                    <label>Type</label>
+                    <select class="field-type" onchange="toggleOptions(this, '${id}')">
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="select">Select</option>
+                        <option value="boolean">Boolean</option>
+                    </select>
+                </div>
+                <div style="flex: 1">
+                    <label>Required</label>
+                    <input type="checkbox" class="field-required" style="width: 20px; height: 20px; margin-top: 5px;">
+                </div>
+                <div style="flex: 2" id="options-container-${id}" style="display: none;">
+                    <label>Options (comma sep)</label>
+                    <input type="text" class="field-options" placeholder="Option 1, Option 2" disabled>
+                </div>
+                <button class="remove-btn" onclick="removeField('${id}')">X</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeField(id) {
+            document.getElementById(`field-row-${id}`).remove();
+        }
+
+        function updateKey(input, id) {
+            const keyInput = document.getElementById(`key-${id}`);
+            keyInput.value = input.value.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        }
+
+        function toggleOptions(select, id) {
+            const optionsInput = document.querySelector(`#field-row-${id} .field-options`);
+            optionsInput.disabled = select.value !== 'select';
+        }
+
         async function createArticle() {
             const org = document.getElementById('mgr-org').value;
             const name = document.getElementById('mgr-name').value;
-            let schema = [];
             
-            try {
-                schema = JSON.parse(document.getElementById('mgr-schema').value);
-            } catch (e) {
-                alert("Invalid JSON in Schema");
-                return;
-            }
+            // Build Schema from UI
+            const schema = [];
+            const rows = document.querySelectorAll('.schema-field-row');
+            
+            rows.forEach(row => {
+                const label = row.querySelector('.field-label').value;
+                const key = row.querySelector('.field-key').value;
+                const type = row.querySelector('.field-type').value;
+                const required = row.querySelector('.field-required').checked;
+                const optionsStr = row.querySelector('.field-options').value;
+
+                if (!label || !key) return;
+
+                const fieldDef = {
+                    key,
+                    label,
+                    type,
+                    validation: { required }
+                };
+
+                if (type === 'select' && optionsStr) {
+                    fieldDef.validation.options = optionsStr.split(',').map(s => s.trim());
+                }
+
+                schema.push(fieldDef);
+            });
 
             const payload = {
                 organization: org,
                 name: name,
                 status: "active",
-                shopFloorSchema: schema, // Sending the schema definition
-                attributeSchema: [] // Empty for now
+                shopFloorSchema: schema,
+                attributeSchema: []
             };
 
             const res = await fetch('/api/articles', {
