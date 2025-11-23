@@ -102,11 +102,24 @@
                     <label>Required</label>
                     <input type="checkbox" class="field-required" style="width: 20px; height: 20px; margin-top: 5px;">
                 </div>
-                <div style="flex: 2" id="options-container-${id}" style="display: none;">
-                    <label>Options (comma sep)</label>
-                    <input type="text" class="field-options" placeholder="Option 1, Option 2" disabled>
+                <div style="flex: 2; display: none;" id="options-wrapper-${id}">
+                    <label>Options</label>
+                    <div id="options-list-${id}"></div>
+                    <button onclick="addOptionInput('${id}')" style="padding: 2px 5px; font-size: 12px; margin-top: 5px;">+ Add Option</button>
                 </div>
                 <button class="remove-btn" onclick="removeField('${id}')">X</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addOptionInput(fieldId) {
+            const container = document.getElementById(`options-list-${fieldId}`);
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.marginBottom = '5px';
+            div.innerHTML = `
+                <input type="text" class="option-value" placeholder="Value" style="flex: 1; margin-right: 5px;">
+                <button onclick="this.parentElement.remove()" style="background: #dc3545; color: white; border: none; cursor: pointer; padding: 0 5px;">x</button>
             `;
             container.appendChild(div);
         }
@@ -121,26 +134,37 @@
         }
 
         function toggleOptions(select, id) {
-            const optionsInput = document.querySelector(`#field-row-${id} .field-options`);
-            optionsInput.disabled = select.value !== 'select';
+            const wrapper = document.getElementById(`options-wrapper-${id}`);
+            wrapper.style.display = select.value === 'select' ? 'block' : 'none';
         }
 
         async function createArticle() {
             const org = document.getElementById('mgr-org').value;
             const name = document.getElementById('mgr-name').value;
             
+            if (!org || !name) {
+                alert("Organization and Article Name are required.");
+                return;
+            }
+
             // Build Schema from UI
             const schema = [];
             const rows = document.querySelectorAll('.schema-field-row');
+            let isValid = true;
             
             rows.forEach(row => {
-                const label = row.querySelector('.field-label').value;
-                const key = row.querySelector('.field-key').value;
+                if (!isValid) return;
+
+                const label = row.querySelector('.field-label').value.trim();
+                const key = row.querySelector('.field-key').value.trim();
                 const type = row.querySelector('.field-type').value;
                 const required = row.querySelector('.field-required').checked;
-                const optionsStr = row.querySelector('.field-options').value;
 
-                if (!label || !key) return;
+                if (!label || !key) {
+                    alert("All fields must have a Label and Key.");
+                    isValid = false;
+                    return;
+                }
 
                 const fieldDef = {
                     key,
@@ -149,12 +173,22 @@
                     validation: { required }
                 };
 
-                if (type === 'select' && optionsStr) {
-                    fieldDef.validation.options = optionsStr.split(',').map(s => s.trim());
+                if (type === 'select') {
+                    const optionInputs = row.querySelectorAll('.option-value');
+                    const options = Array.from(optionInputs).map(input => input.value.trim()).filter(v => v);
+                    
+                    if (options.length === 0) {
+                        alert(`Field '${label}' is a Select type but has no options.`);
+                        isValid = false;
+                        return;
+                    }
+                    fieldDef.validation.options = options;
                 }
 
                 schema.push(fieldDef);
             });
+
+            if (!isValid) return;
 
             const payload = {
                 organization: org,
