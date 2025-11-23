@@ -1,7 +1,8 @@
 import express from "express";
 import path from "path";
 import { __dirname } from "./const/index.js";
-import { readData } from "./utils/index.js";
+import { readData } from "./utils/fileSystem.js";
+import { Article } from "./types/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,8 +16,8 @@ app.get("/api/articles", async (req, res) => {
     let articles = await readData("articles.json", "articles");
 
     if (organization)
-      articles = articles.filter((a) => a.organization === organization);
-    if (status) articles = articles.filter((a) => a.status === status);
+      articles = articles.filter((article: Article) => article.organization === organization);
+    if (status) articles = articles.filter((article: Article) => article.status === status);
 
     res.json({ articles });
   } catch (error) {
