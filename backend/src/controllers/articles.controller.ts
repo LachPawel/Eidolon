@@ -1,30 +1,36 @@
 import { Request, Response } from "express";
-import { readData, writeData } from "../utils/index.js";
-import { Article } from "../types/index.js";
-import { randomUUID } from "crypto";
+import { db } from "../db/index.js";
+import { articles } from "../db/schema.js";
+import { eq, and, like } from "drizzle-orm";
 
 class ArticlesController {
   async getArticles(req: Request, res: Response) {
     try {
       const { organization, status, search } = req.query;
-      let articles = await readData("articles.json", "articles");
 
-      if (typeof organization === "string")
-        articles = articles.filter(
-          (article: Article) => article.organization === organization
-        );
-      if (typeof status === "string")
-        articles = articles.filter(
-          (article: Article) => article.status === status
-        );
-      if (typeof search === "string" && search.length > 0) {
-        const lowerSearch = search.toLowerCase();
-        articles = articles.filter((article: Article) =>
-          article.name.toLowerCase().includes(lowerSearch)
-        );
+      let conditions = [];
+
+      if (typeof organization === "string") {
+        conditions.push(eq(articles.organization, organization));
       }
 
-      res.json({ articles });
+      if (typeof status === "string") {
+        conditions.push(eq(articles.status, status));
+      }
+
+      if (typeof search === "string" && search.length > 0) {
+        conditions.push(like(articles.name, `%${search}%`));
+      }
+
+      const result =
+        conditions.length > 0
+          ? await db
+              .select()
+              .from(articles)
+              .where(and(...conditions))
+          : await db.select().from(articles);
+
+      res.json({ articles: result });
     } catch (error) {
       res.status(500).json({ error: "Failed to load articles" });
     }
@@ -40,21 +46,14 @@ class ArticlesController {
         return;
       }
 
-      const articles = await readData("articles.json", "articles");
-
-      const newArticle: Article = {
-        id: randomUUID(),
+      const [newArticle] = await db.insert(articles).values({
         organization,
         name,
         status: status || "draft",
         attributeSchema: attributeSchema || [],
         attributes: {},
         shopFloorSchema: shopFloorSchema || [],
-        createdAt: new Date().toISOString(),
-      };
-
-      articles.push(newArticle);
-      await writeData("articles.json", "articles", articles);
+      }).returning();
 
       res.status(201).json(newArticle);
     } catch (error) {
