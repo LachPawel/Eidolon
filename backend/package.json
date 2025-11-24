@@ -20,7 +20,12 @@
     "db:push": "npx drizzle-kit push",
     "db:push:test": "npx drizzle-kit push --config=drizzle.config.test.ts",
     "db:seed": "tsx src/seeds/seed.ts",
-    "db:seed:test": "NODE_ENV=test tsx --env-file=.env.test src/seeds/seed.ts 100"
+    "db:seed:test": "NODE_ENV=test tsx --env-file=.env.test src/seeds/seed.ts 100",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "Pawel Lach",
@@ -32,6 +37,7 @@
     "pg": "^8.16.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@faker-js/faker": "^10.1.0",
     "@types/chai": "^5.2.3",
     "@types/express": "^5.0.5",
@@ -39,12 +45,21 @@
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
     "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.47.0",
     "chai": "^6.2.1",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.7",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "mocha": "^11.7.5",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.4",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0"
   }
 }

@@ -9,8 +9,8 @@ export interface FieldDefinition {
   id?: number;
   fieldKey: string;
   fieldLabel: string;
-  fieldType: 'text' | 'number' | 'boolean' | 'select';
-  scope: 'attribute' | 'shop_floor';
+  fieldType: "text" | "number" | "boolean" | "select";
+  scope: "attribute" | "shop_floor";
   validation?: FieldValidation;
 }
 
@@ -18,7 +18,7 @@ export interface Article {
   id?: number;
   name: string;
   organization: string;
-  status: 'draft' | 'active' | 'archived';
+  status: "draft" | "active" | "archived";
   attributeFields?: FieldDefinition[];
   shopFloorFields?: FieldDefinition[];
   createdAt?: Date;
