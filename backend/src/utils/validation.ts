@@ -1,6 +1,9 @@
 import { FieldDefinition } from "../types/index.js";
 
-export const validateFields = (schema: FieldDefinition[], data: Record<string, any>): string[] => {
+export const validateFields = (
+  schema: FieldDefinition[], 
+  data: Record<string, string | number | boolean>
+): string[] => {
   const errors: string[] = [];
 
   for (const field of schema) {

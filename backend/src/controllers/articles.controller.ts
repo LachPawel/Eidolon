@@ -5,7 +5,7 @@ import { eq, and, like } from "drizzle-orm";
 import { Article } from "../types/index.js";
 
 class ArticlesController {
-  async getArticles(req: Request, res: Response) {
+  async getArticles(_req: Request, res: Response) {
     try {
       const allArticles = await db.query.articles.findMany({
         with: {

@@ -39,3 +39,13 @@ export interface Entry {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface EntryValueData {
+  entryId: number;
+  fieldDefinitionId: number;
+  valueText?: string;
+  valueNumber?: string;
+  valueBoolean?: boolean;
+}
+
+export type EntryValueUnion = string | number | boolean;

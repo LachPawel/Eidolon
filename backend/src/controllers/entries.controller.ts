@@ -3,7 +3,7 @@ import { validateFields } from "../utils/index.js";
 import { db } from "../db/index.js";
 import { entries, entryValues, fieldDefinitions } from "../db/schema.js";
 import { eq } from "drizzle-orm";
-import { Entry } from "../types/index.js";
+import { Entry, EntryValueData, EntryValueUnion } from "../types/index.js";
 
 class EntryController {
   async getEntries(req: Request, res: Response) {
@@ -48,7 +48,7 @@ class EntryController {
   async addEntry(req: Request, res: Response) {
     try {
       const articleId = parseInt(req.params.articleId);
-      const { values }: { values: Record<string, any> } = req.body;
+      const { values }: { values: Record<string, EntryValueUnion> } = req.body;
 
       if (isNaN(articleId)) {
         return res.status(400).json({ error: "Invalid article ID" });
@@ -109,7 +109,7 @@ class EntryController {
 
           if (value === undefined || value === null) continue;
 
-          const entryValueData: any = {
+          const entryValueData: EntryValueData = {
             entryId: newEntry.id,
             fieldDefinitionId: field.id!,
           };
