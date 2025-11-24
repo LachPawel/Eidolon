@@ -45,6 +45,11 @@ This repo will be divided into various branches, each representing a different c
     - Create industry templates to define common fields for articles in specific industries.
     - Update tests to utilize the seeded data.
 
+- Chapter 5: The Cleanup - ESLint, Prettier, and Husky Integration
+    - Set up ESLint and Prettier for code formatting and linting.
+    - Integrate Husky to run linting and formatting checks before commits.
+    - Ensure the entire codebase adheres to the defined coding standards.
+
 ### Tech Stack (Work in Progress)
 
 - Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation
