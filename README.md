@@ -52,7 +52,7 @@ This repo will be divided into various branches, each representing a different c
 
 ### Tech Stack (Work in Progress)
 
-- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation
+- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality
 
 ### Requirements (Tested on macOS)
 
