@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import request from 'supertest';
-import { createTestApp } from './app.js';
-import { cleanDatabase, closeDatabase } from './setup.js';
+import { createTestApp } from '../app.js';
+import { cleanDatabase } from '../setup.js';
 
 const app = createTestApp();
 
