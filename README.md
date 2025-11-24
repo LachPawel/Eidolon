@@ -50,9 +50,16 @@ This repo will be divided into various branches, each representing a different c
     - Integrate Husky to run linting and formatting checks before commits.
     - Ensure the entire codebase adheres to the defined coding standards.
 
+- Chapter 6: The Frontend - Building a User Interface with Vite and React
+    - Set up a frontend project using Vite and React.
+    - Create components to display and manage articles.
+    - Implement forms for adding and editing articles.
+    - Connect the frontend to the backend API with tRPC.
+
 ### Tech Stack (Work in Progress)
 
-- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality
+- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC
+- Frontend: Vite, React, TypeScript, tRPC, Tailwind CSS, ESLint, Prettier
 
 ### Requirements (Tested on macOS)
 
@@ -62,20 +69,24 @@ This repo will be divided into various branches, each representing a different c
 ### Getting Started
 
 1. Clone the repository
-2. Navigate to the backend directory: `cd backend`
-3. Install dependencies: `npm install`
-4. Build the project: `npm run build`
-5. Start the server: `npm start` or `npm run dev` for development mode
-6. Create a `.env` file based on the `.env.example` in the root directory and backend directory to configure your environment variables.
-7. Set up the database by running: `npm run db:setup`
-8. Seed the database with initial data: `npm run db:seed`
-9. Access the application at `http://localhost:3000`
-10. Clean the database by running: `npm run db:clean`
+2. Install dependencies: `pnpm install` (or `npm install` if pnpm is not available)
+3. Configure environment variables:
+   - Backend: Create a `.env` file in the `backend` directory based on `.env.example`
+   - Frontend: The `.env.development` file is already provided for local development
+4. Set up the database: `pnpm run db:setup` (or `cd backend && npm run db:setup`)
+5. Seed the database with initial data: `pnpm run db:seed`
+6. Start the development servers: `pnpm dev`
+   - Backend API: `http://localhost:3000`
+   - Frontend: `http://localhost:5173`
+7. Clean the database: `pnpm run db:clean`
 
 ### Testing
 
-0. Create a `.env.test` file based on the `.env.example` and configure your test environment variables.
-1. Ensure the test database is set up by running: `npm run test:db:reset`
-2. Seed the test database with initial data: `npm run test:db:seed`
-3. Run tests using: `npm test` for all tests, `npm run test:unit` for unit tests, or `npm run test:integration` for integration tests.
-4. Clean up the test database by running: `npm run test:db:clean`
+1. Create a `.env.test` file in the `backend` directory based on `.env.example` with test database credentials
+2. Set up the test database: `pnpm run test:db:reset`
+3. Seed the test database: `pnpm run test:db:seed`
+4. Run tests:
+   - All tests: `pnpm test`
+   - Unit tests only: `pnpm run test:unit`
+   - Integration tests only: `pnpm run test:integration`
+5. Clean up test database: `pnpm run test:db:clean`
