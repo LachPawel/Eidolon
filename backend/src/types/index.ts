@@ -1,7 +1,3 @@
-export type FieldType = 'text' | 'number' | 'boolean' | 'select';
-
-export type FieldValue = string | number | boolean | null;
-
 export interface FieldValidation {
   required?: boolean;
   min?: number;
@@ -10,32 +6,36 @@ export interface FieldValidation {
 }
 
 export interface FieldDefinition {
-  key: string;
-  label: string;
-  type: FieldType;
+  id?: number;
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType: 'text' | 'number' | 'boolean' | 'select';
+  scope: 'attribute' | 'shop_floor';
   validation?: FieldValidation;
 }
 
 export interface Article {
-  id: string;
-  organization: string;
+  id?: number;
   name: string;
+  organization: string;
   status: 'draft' | 'active' | 'archived';
-  attributeSchema: FieldDefinition[];
-  attributes: Record<string, FieldValue>; 
-  shopFloorSchema: FieldDefinition[];
-  createdAt: string;
+  attributeFields?: FieldDefinition[];
+  shopFloorFields?: FieldDefinition[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface EntryValue {
+  fieldDefinitionId: number;
+  valueText?: string;
+  valueNumber?: number;
+  valueBoolean?: boolean;
 }
 
 export interface Entry {
-  id: string;
-  articleId: string;
-  organization: string;
-  data: Record<string, FieldValue>; 
-  timestamp: string;
-}
-
-export interface DataSchema {
-  articles: Article[];
-  entries: Entry[];
+  id?: number;
+  articleId: number;
+  values: EntryValue[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
