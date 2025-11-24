@@ -5,6 +5,7 @@ const entriesRouter = Router();
 
 const entryController = new EntryController();
 
-entriesRouter.post("/", (req, res) => entryController.addEntry(req, res));
+entriesRouter.get("/:articleId", (req, res) => entryController.getEntries(req, res));
+entriesRouter.post("/:articleId", (req, res) => entryController.addEntry(req, res));
 
 export { entriesRouter };

@@ -176,9 +176,10 @@
                 usedKeys.add(key);
 
                 const fieldDef = {
-                    key,
-                    label,
-                    type,
+                    fieldKey: key,
+                    fieldLabel: label,
+                    fieldType: type,
+                    scope: 'shop_floor',
                     validation: { required }
                 };
 
@@ -203,8 +204,8 @@
                 organization: org,
                 name: name,
                 status: "active",
-                shopFloorSchema: schema,
-                attributeSchema: []
+                shopFloorFields: schema,
+                attributeFields: []
             };
 
             const res = await fetch('/api/articles', {
@@ -234,7 +235,7 @@
 
             const res = await fetch(url);
             const data = await res.json();
-            currentArticles = data.articles;
+            currentArticles = data.articles || [];
             
             const select = document.getElementById('sf-article-select');
             select.innerHTML = '<option value="">-- Select an Article --</option>';
@@ -261,10 +262,20 @@
             const container = document.getElementById('sf-dynamic-form');
             container.innerHTML = '';
 
-            const article = currentArticles.find(a => a.id === articleId);
-            if (!article || !article.shopFloorSchema) return;
+            if (!articleId) return;
 
-            currentSchema = article.shopFloorSchema;
+            const article = currentArticles.find(a => String(a.id) === String(articleId));
+            if (!article) {
+                console.error('Article not found:', articleId, currentArticles);
+                return;
+            }
+            
+            if (!article.shopFloorFields || article.shopFloorFields.length === 0) {
+                container.innerHTML = '<p>No shop floor fields defined for this article.</p>';
+                return;
+            }
+
+            currentSchema = article.shopFloorFields;
 
             // Generate HTML for each field in the schema
             currentSchema.forEach(field => {
@@ -272,14 +283,14 @@
                 div.className = 'form-group dynamic-field';
                 
                 const label = document.createElement('label');
-                label.textContent = field.label;
+                label.textContent = field.fieldLabel;
                 div.appendChild(label);
 
                 let input;
-                if (field.type === 'select') {
+                if (field.fieldType === 'select') {
                     input = document.createElement('select');
-                    input.id = `field-${field.key}`;
-                    field.validation.options.forEach(opt => {
+                    input.id = `field-${field.fieldKey}`;
+                    field.validation?.options?.forEach(opt => {
                         const option = document.createElement('option');
                         option.value = opt;
                         option.text = opt;
@@ -287,8 +298,8 @@
                     });
                 } else {
                     input = document.createElement('input');
-                    input.id = `field-${field.key}`;
-                    input.type = field.type === 'number' ? 'number' : 'text';
+                    input.id = `field-${field.fieldKey}`;
+                    input.type = field.fieldType === 'number' ? 'number' : 'text';
                 }
                 
                 div.appendChild(input);
@@ -308,23 +319,21 @@
             // Collect data from dynamic inputs
             const collectedData = {};
             currentSchema.forEach(field => {
-                const input = document.getElementById(`field-${field.key}`);
+                const input = document.getElementById(`field-${field.fieldKey}`);
                 let value = input.value;
                 
-                if (field.type === 'number') {
+                if (field.fieldType === 'number') {
                     value = value === '' ? null : Number(value);
                 }
                 
-                collectedData[field.key] = value;
+                collectedData[field.fieldKey] = value;
             });
 
-            const res = await fetch('/api/entries', {
+            const res = await fetch(`/api/entries/${articleId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    articleId, 
-                    organization: org, 
-                    data: collectedData 
+                    values: collectedData 
                 })
             });
             

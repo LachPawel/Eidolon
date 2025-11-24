@@ -16,11 +16,12 @@ describe('Articles API', () => {
         organization: 'Test Corp',
         name: 'Test Article',
         status: 'active',
-        shopFloorSchema: [
+        shopFloorFields: [
           {
-            key: 'weight',
-            label: 'Weight',
-            type: 'number',
+            fieldKey: 'weight',
+            fieldLabel: 'Weight',
+            fieldType: 'number',
+            scope: 'shop_floor',
             validation: { required: true, min: 0, max: 100 }
           }
         ]

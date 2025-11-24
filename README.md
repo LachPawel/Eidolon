@@ -33,9 +33,15 @@ This repo will be divided into various branches, each representing a different c
     - Write unit and integration tests for backend functionalities.
     - Create Docker setup for local development and testing.
 
+- Chapter 3: The Normalization - Redesigning the Database Schema
+    - Design a normalized schema to avoid data duplication data integrity and scalability, by removing jsonb fields.
+    - Update backend code to work with the normalized schema.
+    - Ensure all tests pass with the new schema.
+    - Add endpoint to fetch entries for a specific article.
+
 ### Tech Stack (Work in Progress)
 
-- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker
+- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing
 
 ### Requirements (Tested on macOS)
 
@@ -52,9 +58,11 @@ This repo will be divided into various branches, each representing a different c
 6. Create a `.env` file based on the `.env.example` in the root directory and backend directory to configure your environment variables.
 7. Set up the database by running: `npm run db:setup`
 8. Access the application at `http://localhost:3000`
+9. Clean the database by running: `npm run db:clean`
 
 ### Testing
 
 0. Create a `.env.test` file based on the `.env.example` and configure your test environment variables.
 1. Ensure the test database is set up by running: `npm run test:db:reset`
 2. Run tests using: `npm test` for all tests, `npm run test:unit` for unit tests, or `npm run test:integration` for integration tests.
+3. Clean up the test database by running: `npm run test:db:clean`
