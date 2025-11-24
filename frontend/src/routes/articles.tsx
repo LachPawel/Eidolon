@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { trpc } from "@/trpc";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { Article } from "@/types";
 
 export const Route = createFileRoute("/articles")({
   component: Articles,
@@ -10,15 +11,45 @@ export const Route = createFileRoute("/articles")({
 function Articles() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: articles, isLoading } = trpc.articles.list.useQuery();
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    trpc.articles.list.useInfiniteQuery(
+      { limit: 20, search: debouncedSearch || undefined },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        placeholderData: (previousData) => previousData,
+      }
+    );
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading) return <div className="p-8">Loading...</div>;
 
-  const filteredArticles = articles?.filter(
-    (article) =>
-      article.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.organization.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const allArticles = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <div className="p-8 container mx-auto">
@@ -58,34 +89,66 @@ function Articles() {
               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                 Attribute Fields
               </th>
+              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
-            {filteredArticles?.map((article) => (
-              <tr key={article.id} className="border-b transition-colors hover:bg-muted/50">
-                <td className="p-4 align-middle">{article.name}</td>
-                <td className="p-4 align-middle">{article.organization}</td>
-                <td className="p-4 align-middle">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      article.status === "active"
-                        ? "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20"
-                        : article.status === "draft"
-                          ? "bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20"
-                          : "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"
-                    }`}
-                  >
-                    {article.status}
-                  </span>
-                </td>
-                <td className="p-4 align-middle">{article.shopFloorFields?.length || 0}</td>
-                <td className="p-4 align-middle">{article.attributeFields?.length || 0}</td>
-              </tr>
+            {allArticles.map((article) => (
+              <ArticleRow key={article.id} article={article} />
             ))}
           </tbody>
         </table>
+        {hasNextPage && (
+          <div ref={loadMoreRef} className="p-4 text-center">
+            {isFetchingNextPage ? "Loading more..." : "Load more"}
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function ArticleRow({ article }: { article: Article }) {
+  const utils = trpc.useUtils();
+  const deleteArticle = trpc.articles.delete.useMutation({
+    onSuccess: () => {
+      utils.articles.list.invalidate();
+    },
+  });
+
+  const handleDelete = () => {
+    if (confirm(`Are you sure you want to delete "${article.name}"?`)) {
+      deleteArticle.mutate({ id: article.id });
+    }
+  };
+
+  return (
+    <tr className="border-b transition-colors hover:bg-muted/50">
+      <td className="p-4 align-middle">{article.name}</td>
+      <td className="p-4 align-middle">{article.organization}</td>
+      <td className="p-4 align-middle">
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+            article.status === "active"
+              ? "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20"
+              : article.status === "draft"
+                ? "bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20"
+                : "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"
+          }`}
+        >
+          {article.status}
+        </span>
+      </td>
+      <td className="p-4 align-middle">{article.shopFloorFields?.length || 0}</td>
+      <td className="p-4 align-middle">{article.attributeFields?.length || 0}</td>
+      <td className="p-4 align-middle">
+        <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleteArticle.isPending}>
+          {deleteArticle.isPending ? "Deleting..." : "Delete"}
+        </Button>
+      </td>
+    </tr>
   );
 }
 

@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { trpc } from "@/trpc";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import type { Article } from "@/types";
+import { useState, useEffect, useRef } from "react";
+import type { Article, Field } from "@/types";
 
 export const Route = createFileRoute("/shopfloor")({
   component: ShopFloor,
@@ -11,17 +11,48 @@ export const Route = createFileRoute("/shopfloor")({
 function ShopFloor() {
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: articles, isLoading } = trpc.articles.list.useQuery();
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    trpc.articles.list.useInfiniteQuery(
+      { limit: 20, search: debouncedSearch || undefined },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        placeholderData: (previousData) => previousData,
+      }
+    );
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading) return <div className="p-8">Loading...</div>;
 
-  const selectedArticle = articles?.find((a) => a.id === selectedArticleId) as Article | undefined;
-
-  const filteredArticles = articles?.filter(
-    (article) =>
-      article.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.organization.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const allArticles = data?.pages.flatMap((page) => page.items) ?? [];
+  const selectedArticle = allArticles.find((a) => a.id === selectedArticleId) as
+    | Article
+    | undefined;
 
   return (
     <div className="p-8 container mx-auto">
@@ -37,8 +68,8 @@ function ShopFloor() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 border rounded-md mb-3"
           />
-          <div className="space-y-2">
-            {filteredArticles?.map((article) => (
+          <div className="space-y-2 max-h-[600px] overflow-y-auto">
+            {allArticles.map((article) => (
               <button
                 key={article.id}
                 onClick={() => setSelectedArticleId(article.id)}
@@ -52,6 +83,11 @@ function ShopFloor() {
                 <div className="text-sm opacity-80">{article.organization}</div>
               </button>
             ))}
+            {hasNextPage && (
+              <div ref={loadMoreRef} className="p-2 text-center text-sm text-muted-foreground">
+                {isFetchingNextPage ? "Loading more..." : "Scroll for more"}
+              </div>
+            )}
           </div>
         </div>
 
@@ -96,7 +132,7 @@ function EntryForm({ article }: { article: Article }) {
     <div>
       <h2 className="text-xl font-semibold mb-4">Enter Data for: {article.name}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {article.shopFloorFields?.map((field) => (
+        {article.shopFloorFields?.map((field: Field) => (
           <div key={field.id}>
             <label className="block text-sm font-medium mb-1">
               {field.fieldLabel}
@@ -147,7 +183,7 @@ function EntryForm({ article }: { article: Article }) {
                 required={field.validation?.required}
               >
                 <option value="">Select...</option>
-                {field.validation.options.map((option) => (
+                {field.validation.options.map((option: string) => (
                   <option key={option} value={option}>
                     {option}
                   </option>

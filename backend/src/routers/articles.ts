@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, publicProcedure } from "../trpc.js";
 import { db } from "../db/index.js";
 import { articles, fieldDefinitions, fieldValidations } from "../db/schema.js";
-import { eq, and, like } from "drizzle-orm";
+import { eq, and, ilike } from "drizzle-orm";
 
 const fieldValidationSchema = z
   .object({
@@ -26,6 +26,8 @@ export const articlesRouter = router({
     .input(
       z
         .object({
+          limit: z.number().min(1).max(100).default(20),
+          cursor: z.number().optional(),
           organization: z.string().optional(),
           status: z.enum(["draft", "active", "archived"]).optional(),
           search: z.string().optional(),
@@ -33,6 +35,8 @@ export const articlesRouter = router({
         .optional()
     )
     .query(async ({ input }) => {
+      const limit = input?.limit ?? 20;
+      const cursor = input?.cursor;
       const conditions = [];
 
       if (input?.organization) {
@@ -44,13 +48,15 @@ export const articlesRouter = router({
       }
 
       if (input?.search) {
-        conditions.push(like(articles.name, `%${input.search}%`));
+        conditions.push(ilike(articles.name, `%${input.search}%`));
       }
 
       const allArticles =
         conditions.length > 0
           ? await db.query.articles.findMany({
               where: and(...conditions),
+              limit: limit + 1,
+              offset: cursor || 0,
               with: {
                 fieldDefinitions: {
                   with: {
@@ -60,6 +66,8 @@ export const articlesRouter = router({
               },
             })
           : await db.query.articles.findMany({
+              limit: limit + 1,
+              offset: cursor || 0,
               with: {
                 fieldDefinitions: {
                   with: {
@@ -69,48 +77,57 @@ export const articlesRouter = router({
               },
             });
 
-      return allArticles.map((article) => ({
-        id: article.id,
-        name: article.name,
-        organization: article.organization,
-        status: article.status,
-        attributeFields: article.fieldDefinitions
-          .filter((fd) => fd.scope === "attribute")
-          .map((fd) => ({
-            id: fd.id,
-            fieldKey: fd.fieldKey,
-            fieldLabel: fd.fieldLabel,
-            fieldType: fd.fieldType,
-            scope: "attribute" as const,
-            validation: fd.validation
-              ? {
-                  required: fd.validation.required ?? false,
-                  min: fd.validation.min ? Number(fd.validation.min) : undefined,
-                  max: fd.validation.max ? Number(fd.validation.max) : undefined,
-                  options: fd.validation.options ?? undefined,
-                }
-              : undefined,
-          })),
-        shopFloorFields: article.fieldDefinitions
-          .filter((fd) => fd.scope === "shop_floor")
-          .map((fd) => ({
-            id: fd.id,
-            fieldKey: fd.fieldKey,
-            fieldLabel: fd.fieldLabel,
-            fieldType: fd.fieldType,
-            scope: "shop_floor" as const,
-            validation: fd.validation
-              ? {
-                  required: fd.validation.required ?? false,
-                  min: fd.validation.min ? Number(fd.validation.min) : undefined,
-                  max: fd.validation.max ? Number(fd.validation.max) : undefined,
-                  options: fd.validation.options ?? undefined,
-                }
-              : undefined,
-          })),
-        createdAt: article.createdAt,
-        updatedAt: article.updatedAt,
-      }));
+      let nextCursor: number | undefined = undefined;
+      if (allArticles.length > limit) {
+        allArticles.pop();
+        nextCursor = (cursor || 0) + limit;
+      }
+
+      return {
+        items: allArticles.map((article) => ({
+          id: article.id,
+          name: article.name,
+          organization: article.organization,
+          status: article.status,
+          attributeFields: article.fieldDefinitions
+            .filter((fd) => fd.scope === "attribute")
+            .map((fd) => ({
+              id: fd.id,
+              fieldKey: fd.fieldKey,
+              fieldLabel: fd.fieldLabel,
+              fieldType: fd.fieldType,
+              scope: "attribute" as const,
+              validation: fd.validation
+                ? {
+                    required: fd.validation.required ?? false,
+                    min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                    max: fd.validation.max ? Number(fd.validation.max) : undefined,
+                    options: fd.validation.options ?? undefined,
+                  }
+                : undefined,
+            })),
+          shopFloorFields: article.fieldDefinitions
+            .filter((fd) => fd.scope === "shop_floor")
+            .map((fd) => ({
+              id: fd.id,
+              fieldKey: fd.fieldKey,
+              fieldLabel: fd.fieldLabel,
+              fieldType: fd.fieldType,
+              scope: "shop_floor" as const,
+              validation: fd.validation
+                ? {
+                    required: fd.validation.required ?? false,
+                    min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                    max: fd.validation.max ? Number(fd.validation.max) : undefined,
+                    options: fd.validation.options ?? undefined,
+                  }
+                : undefined,
+            })),
+          createdAt: article.createdAt,
+          updatedAt: article.updatedAt,
+        })),
+        nextCursor,
+      };
     }),
 
   create: publicProcedure
@@ -164,4 +181,9 @@ export const articlesRouter = router({
         return newArticle;
       });
     }),
+
+  delete: publicProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    await db.delete(articles).where(eq(articles.id, input.id));
+    return { success: true };
+  }),
 });
