@@ -12,6 +12,8 @@
     "test:unit": "mocha --require tsx/cjs --extensions ts --exit 'src/tests/unit/**/*.test.ts'",
     "test:integration": "NODE_ENV=test mocha --require ./src/tests/loadEnv.cjs --require tsx/cjs --extensions ts --exit 'src/tests/integration/**/*.test.ts'",
     "test:watch": "NODE_ENV=test mocha --require ./src/tests/loadEnv.cjs --require tsx/cjs --extensions ts --watch --watch-files src 'src/tests/**/*.test.ts'",
+    "test:db:clean": "docker compose down postgres-test -v",
+    "test:db:reset": "pnpm test:db:clean && docker compose up -d postgres-test && pnpm db:push:test",
     "pretest:integration": "docker compose up -d postgres-test && pnpm db:push:test",
     "db:push": "npx drizzle-kit push",
     "db:push:test": "npx drizzle-kit push --config=drizzle.config.test.ts"
