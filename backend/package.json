@@ -18,7 +18,9 @@
     "db:setup": "docker compose up -d postgres && pnpm db:push",
     "db:clean": "docker compose down postgres -v",
     "db:push": "npx drizzle-kit push",
-    "db:push:test": "npx drizzle-kit push --config=drizzle.config.test.ts"
+    "db:push:test": "npx drizzle-kit push --config=drizzle.config.test.ts",
+    "db:seed": "tsx src/seeds/seed.ts",
+    "db:seed:test": "NODE_ENV=test tsx --env-file=.env.test src/seeds/seed.ts 100"
   },
   "keywords": [],
   "author": "Pawel Lach",
@@ -30,6 +32,7 @@
     "pg": "^8.16.3"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.1.0",
     "@types/chai": "^5.2.3",
     "@types/express": "^5.0.5",
     "@types/mocha": "^10.0.10",
