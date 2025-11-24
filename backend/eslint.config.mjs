@@ -4,6 +4,18 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 
 export default [
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      'drizzle.config.ts',
+      'drizzle.config.test.ts',
+      '*.js',
+      '*.mjs',
+      '*.cjs',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   prettierConfig,
@@ -15,6 +27,7 @@ export default [
         ecmaVersion: 2022,
         sourceType: 'module',
         project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {
@@ -48,15 +61,5 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-expressions': 'off',
     },
-  },
-  {
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-      'coverage/**',
-      '*.js',
-      'drizzle.config.ts',
-      'drizzle.config.test.ts',
-    ],
   },
 ];
