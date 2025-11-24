@@ -1,7 +1,7 @@
-import { z } from 'zod';
-import { router, publicProcedure } from '../trpc.js';
-import { db } from '../db/index.js';
-import { articles } from '../db/schema.js';
+import { z } from "zod";
+import { router, publicProcedure } from "../trpc.js";
+import { db } from "../db/index.js";
+import { articles } from "../db/schema.js";
 
 export const articlesRouter = router({
   list: publicProcedure.query(async () => {
@@ -12,7 +12,7 @@ export const articlesRouter = router({
       z.object({
         name: z.string(),
         organization: z.string(),
-        status: z.enum(['draft', 'active', 'archived']),
+        status: z.enum(["draft", "active", "archived"]),
       })
     )
     .mutation(async ({ input }) => {
