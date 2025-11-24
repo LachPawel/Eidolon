@@ -5,7 +5,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 type RouterOutput = inferRouterOutputs<AppRouter>;
 
 // Export specific types we need
-export type Article = RouterOutput["articles"]["list"][number];
+export type Article = RouterOutput["articles"]["list"]["items"][number];
 export type ArticlesList = RouterOutput["articles"]["list"];
 export type CreatedArticle = RouterOutput["articles"]["create"];
 
