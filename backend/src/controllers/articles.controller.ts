@@ -9,7 +9,7 @@ class ArticlesController {
     try {
       const { organization, status, search } = req.query;
 
-      let conditions = [];
+      const conditions = [];
 
       if (typeof organization === "string") {
         conditions.push(eq(articles.organization, organization));
@@ -23,26 +23,27 @@ class ArticlesController {
         conditions.push(like(articles.name, `%${search}%`));
       }
 
-      const allArticles = conditions.length > 0
-        ? await db.query.articles.findMany({
-            where: and(...conditions),
-            with: {
-              fieldDefinitions: {
-                with: {
-                  validation: true,
+      const allArticles =
+        conditions.length > 0
+          ? await db.query.articles.findMany({
+              where: and(...conditions),
+              with: {
+                fieldDefinitions: {
+                  with: {
+                    validation: true,
+                  },
                 },
               },
-            },
-          })
-        : await db.query.articles.findMany({
-            with: {
-              fieldDefinitions: {
-                with: {
-                  validation: true,
+            })
+          : await db.query.articles.findMany({
+              with: {
+                fieldDefinitions: {
+                  with: {
+                    validation: true,
+                  },
                 },
               },
-            },
-          });
+            });
 
       const formattedArticles: Article[] = allArticles.map((article) => ({
         id: article.id,
@@ -60,12 +61,8 @@ class ArticlesController {
             validation: fd.validation
               ? {
                   required: fd.validation.required ?? false,
-                  min: fd.validation.min
-                    ? Number(fd.validation.min)
-                    : undefined,
-                  max: fd.validation.max
-                    ? Number(fd.validation.max)
-                    : undefined,
+                  min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                  max: fd.validation.max ? Number(fd.validation.max) : undefined,
                   options: fd.validation.options ?? undefined,
                 }
               : undefined,
@@ -81,12 +78,8 @@ class ArticlesController {
             validation: fd.validation
               ? {
                   required: fd.validation.required ?? false,
-                  min: fd.validation.min
-                    ? Number(fd.validation.min)
-                    : undefined,
-                  max: fd.validation.max
-                    ? Number(fd.validation.max)
-                    : undefined,
+                  min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                  max: fd.validation.max ? Number(fd.validation.max) : undefined,
                   options: fd.validation.options ?? undefined,
                 }
               : undefined,
@@ -104,18 +97,10 @@ class ArticlesController {
 
   async addArticle(req: Request, res: Response) {
     try {
-      const {
-        name,
-        organization,
-        status,
-        attributeFields,
-        shopFloorFields,
-      }: Article = req.body;
+      const { name, organization, status, attributeFields, shopFloorFields }: Article = req.body;
 
       if (!name || !organization) {
-        return res
-          .status(400)
-          .json({ error: "Organization and Name are required" });
+        return res.status(400).json({ error: "Organization and Name are required" });
       }
 
       // Start transaction

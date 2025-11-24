@@ -15,7 +15,7 @@ async function seedDatabase(articleCount: number = 10000) {
     getArticleStatistics(generatedArticles);
 
     console.log("📦 Inserting articles into database...\n");
-    
+
     let insertedCount = 0;
     let fieldDefinitionsCount = 0;
     let fieldValidationsCount = 0;
@@ -23,7 +23,7 @@ async function seedDatabase(articleCount: number = 10000) {
     // Process in batches
     for (let i = 0; i < generatedArticles.length; i += BATCH_SIZE) {
       const batch = generatedArticles.slice(i, i + BATCH_SIZE);
-      
+
       await db.transaction(async (tx) => {
         for (const article of batch) {
           // Insert article
@@ -94,7 +94,9 @@ async function seedDatabase(articleCount: number = 10000) {
         }
       });
 
-      console.log(`  ✓ Inserted ${Math.min(i + BATCH_SIZE, generatedArticles.length)}/${generatedArticles.length} articles`);
+      console.log(
+        `  ✓ Inserted ${Math.min(i + BATCH_SIZE, generatedArticles.length)}/${generatedArticles.length} articles`
+      );
     }
 
     console.log("\n" + "=".repeat(60));
@@ -104,7 +106,6 @@ async function seedDatabase(articleCount: number = 10000) {
     console.log(`Field definitions created: ${fieldDefinitionsCount}`);
     console.log(`Field validations created: ${fieldValidationsCount}`);
     console.log("=".repeat(60) + "\n");
-
   } catch (error) {
     console.error("\n❌ Error seeding database:", error);
     process.exit(1);

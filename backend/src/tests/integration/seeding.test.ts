@@ -140,9 +140,7 @@ describe("Seeding Integration", () => {
       });
 
       expect(result).to.have.lengthOf(1);
-      expect(result[0].fieldDefinitions.length).to.equal(
-        article.shopFloorFields.length
-      );
+      expect(result[0].fieldDefinitions.length).to.equal(article.shopFloorFields.length);
 
       // Verify field definitions have correct scope
       result[0].fieldDefinitions.forEach((fd) => {
@@ -179,12 +177,8 @@ describe("Seeding Integration", () => {
         .where(eq(articles.status, "archived"));
 
       // Active should be the most common
-      expect(Number(activeCount[0].count)).to.be.greaterThan(
-        Number(draftCount[0].count)
-      );
-      expect(Number(activeCount[0].count)).to.be.greaterThan(
-        Number(archivedCount[0].count)
-      );
+      expect(Number(activeCount[0].count)).to.be.greaterThan(Number(draftCount[0].count));
+      expect(Number(activeCount[0].count)).to.be.greaterThan(Number(archivedCount[0].count));
     });
 
     it("should maintain referential integrity", async () => {

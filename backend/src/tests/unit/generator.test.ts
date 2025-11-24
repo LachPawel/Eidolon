@@ -56,18 +56,14 @@ describe("Article Generator", () => {
         expect(field).to.have.property("fieldType");
         expect(field).to.have.property("scope");
         expect(field.scope).to.equal("shop_floor");
-        expect(["text", "number", "boolean", "select"]).to.include(
-          field.fieldType
-        );
+        expect(["text", "number", "boolean", "select"]).to.include(field.fieldType);
       });
     });
 
     it("should generate validation rules when present", () => {
       const article = generateArticle("metal-automotive");
 
-      const fieldsWithValidation = article.shopFloorFields.filter(
-        (f) => f.validation
-      );
+      const fieldsWithValidation = article.shopFloorFields.filter((f) => f.validation);
       expect(fieldsWithValidation.length).to.be.greaterThan(0);
 
       fieldsWithValidation.forEach((field) => {
@@ -87,9 +83,7 @@ describe("Article Generator", () => {
     });
 
     it("should throw error for invalid industry", () => {
-      expect(() => generateArticle("invalid-industry")).to.throw(
-        "Industry template not found"
-      );
+      expect(() => generateArticle("invalid-industry")).to.throw("Industry template not found");
     });
   });
 

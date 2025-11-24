@@ -1,16 +1,16 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
-import * as schema from '../db/schema.js';
+import * as schema from "../db/schema.js";
 import { Pool } from "pg";
-import { sql } from 'drizzle-orm';
+import { sql } from "drizzle-orm";
 
 // Load .env.test before anything else
-dotenv.config({ path: '.env.test' });
+dotenv.config({ path: ".env.test" });
 
 const connectionString = process.env.DATABASE_URL!;
 
 if (!connectionString) {
-  throw new Error('TEST_DATABASE_URL not found in .env.test');
+  throw new Error("TEST_DATABASE_URL not found in .env.test");
 }
 
 const client = new Pool({

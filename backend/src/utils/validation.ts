@@ -1,7 +1,7 @@
 import { FieldDefinition } from "../types/index.js";
 
 export const validateFields = (
-  schema: FieldDefinition[], 
+  schema: FieldDefinition[],
   data: Record<string, string | number | boolean>
 ): string[] => {
   const errors: string[] = [];
@@ -9,17 +9,17 @@ export const validateFields = (
   for (const field of schema) {
     const value = data[field.fieldKey];
 
-    if (field.validation?.required && (value === undefined || value === null || value === '')) {
+    if (field.validation?.required && (value === undefined || value === null || value === "")) {
       errors.push(`Field '${field.fieldLabel}' is required.`);
       continue;
     }
 
-    if (value === undefined || value === null || value === '') continue;
+    if (value === undefined || value === null || value === "") continue;
 
-    if (field.fieldType === 'number') {
-      const numValue = typeof value === 'string' ? parseFloat(value) : value;
-      
-      if (typeof numValue !== 'number' || isNaN(numValue)) {
+    if (field.fieldType === "number") {
+      const numValue = typeof value === "string" ? parseFloat(value) : value;
+
+      if (typeof numValue !== "number" || isNaN(numValue)) {
         errors.push(`Field '${field.fieldLabel}' must be a number.`);
       } else {
         if (field.validation?.min !== undefined && numValue < field.validation.min) {
@@ -30,9 +30,9 @@ export const validateFields = (
         }
       }
     }
-    
-    if (field.fieldType === 'select' && field.validation?.options) {
-      if (typeof value !== 'string' || !field.validation.options.includes(value)) {
+
+    if (field.fieldType === "select" && field.validation?.options) {
+      if (typeof value !== "string" || !field.validation.options.includes(value)) {
         errors.push(`Field '${field.fieldLabel}' has an invalid selection.`);
       }
     }

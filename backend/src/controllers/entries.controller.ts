@@ -74,20 +74,20 @@ class EntryController {
       const schema = article.fieldDefinitions
         .filter((fd) => fd.scope === "shop_floor")
         .map((fd) => ({
-        id: fd.id,
-        fieldKey: fd.fieldKey,
-        fieldLabel: fd.fieldLabel,
-        fieldType: fd.fieldType as "text" | "number" | "boolean" | "select",
-        scope: "shop_floor" as const,
-        validation: fd.validation
-          ? {
-              required: fd.validation.required ?? false,
-              min: fd.validation.min ? Number(fd.validation.min) : undefined,
-              max: fd.validation.max ? Number(fd.validation.max) : undefined,
-              options: fd.validation.options ?? undefined,
-            }
-          : undefined,
-      }));
+          id: fd.id,
+          fieldKey: fd.fieldKey,
+          fieldLabel: fd.fieldLabel,
+          fieldType: fd.fieldType as "text" | "number" | "boolean" | "select",
+          scope: "shop_floor" as const,
+          validation: fd.validation
+            ? {
+                required: fd.validation.required ?? false,
+                min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                max: fd.validation.max ? Number(fd.validation.max) : undefined,
+                options: fd.validation.options ?? undefined,
+              }
+            : undefined,
+        }));
 
       // Validate the entry data
       const validationErrors = validateFields(schema, values);
