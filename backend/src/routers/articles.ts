@@ -14,6 +14,7 @@ const fieldValidationSchema = z
   .optional();
 
 const fieldSchema = z.object({
+  id: z.number().optional(),
   fieldKey: z.string(),
   fieldLabel: z.string(),
   fieldType: z.enum(["text", "number", "boolean", "select"]),
@@ -179,6 +180,109 @@ export const articlesRouter = router({
         }
 
         return newArticle;
+      });
+    }),
+
+  update: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        organization: z.string().optional(),
+        status: z.enum(["draft", "active", "archived"]).optional(),
+        attributeFields: z.array(fieldSchema).optional(),
+        shopFloorFields: z.array(fieldSchema).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await db.transaction(async (tx) => {
+        // Update article details
+        if (input.name || input.organization || input.status) {
+          await tx
+            .update(articles)
+            .set({
+              name: input.name,
+              organization: input.organization,
+              status: input.status,
+              updatedAt: new Date(),
+            })
+            .where(eq(articles.id, input.id));
+        }
+
+        // Handle fields if provided
+        const allInputFields = [...(input.attributeFields || []), ...(input.shopFloorFields || [])];
+
+        if (input.attributeFields || input.shopFloorFields) {
+          // Get existing fields
+          const existingFields = await tx.query.fieldDefinitions.findMany({
+            where: eq(fieldDefinitions.articleId, input.id),
+          });
+
+          const existingFieldIds = new Set(existingFields.map((f) => f.id));
+          const inputFieldIds = new Set(allInputFields.filter((f) => f.id).map((f) => f.id));
+
+          // Delete fields not in input
+          const fieldsToDelete = existingFields.filter((f) => !inputFieldIds.has(f.id));
+          for (const field of fieldsToDelete) {
+            await tx.delete(fieldDefinitions).where(eq(fieldDefinitions.id, field.id));
+          }
+
+          // Update or Create fields
+          for (const field of allInputFields) {
+            if (field.id && existingFieldIds.has(field.id)) {
+              // Update existing field
+              await tx
+                .update(fieldDefinitions)
+                .set({
+                  fieldKey: field.fieldKey,
+                  fieldLabel: field.fieldLabel,
+                  fieldType: field.fieldType,
+                  scope: field.scope,
+                })
+                .where(eq(fieldDefinitions.id, field.id));
+
+              // Update validation
+              // First delete existing validation (easier than update)
+              await tx
+                .delete(fieldValidations)
+                .where(eq(fieldValidations.fieldDefinitionId, field.id));
+
+              if (field.validation) {
+                await tx.insert(fieldValidations).values({
+                  fieldDefinitionId: field.id,
+                  required: field.validation.required ?? false,
+                  min: field.validation.min?.toString(),
+                  max: field.validation.max?.toString(),
+                  options: field.validation.options,
+                });
+              }
+            } else {
+              // Create new field
+              const [newFieldDef] = await tx
+                .insert(fieldDefinitions)
+                .values({
+                  articleId: input.id,
+                  fieldKey: field.fieldKey,
+                  fieldLabel: field.fieldLabel,
+                  fieldType: field.fieldType,
+                  scope: field.scope,
+                })
+                .returning();
+
+              if (field.validation) {
+                await tx.insert(fieldValidations).values({
+                  fieldDefinitionId: newFieldDef.id,
+                  required: field.validation.required ?? false,
+                  min: field.validation.min?.toString(),
+                  max: field.validation.max?.toString(),
+                  options: field.validation.options,
+                });
+              }
+            }
+          }
+        }
+
+        return { success: true };
       });
     }),
 
