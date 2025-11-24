@@ -24,11 +24,23 @@ This repo will be divided into various branches, each representing a different c
     - Store articles in a JSON file.
     - Create simple frontend to add articles, and new entries for articles (Shop Floor)
     - Implement TypeScript for type safety.
-    - Arrange the project in the MVC pattern.
+    - Arrange the project in the MVC pattern
+
+- Chapter 2: The Persistence - Integrating a Database and testing the grounds
+    - Set up a PostgreSQL database.
+    - Use Drizzle ORM to interact with the database.
+    - Update CRUD operations to use the database.
+    - Write unit and integration tests for backend functionalities.
+    - Create Docker setup for local development and testing.
 
 ### Tech Stack (Work in Progress)
 
-- Backend: Node.js with Express, TypeScript
+- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker
+
+### Requirements (Tested on macOS)
+
+- Node.js v22+
+- Docker
 
 ### Getting Started
 
@@ -37,4 +49,12 @@ This repo will be divided into various branches, each representing a different c
 3. Install dependencies: `npm install`
 4. Build the project: `npm run build`
 5. Start the server: `npm start` or `npm run dev` for development mode
-6. Access the application at `http://localhost:3000`
+6. Create a `.env` file based on the `.env.example` in the root directory and backend directory to configure your environment variables.
+7. Set up the database by running: `npm run db:setup`
+8. Access the application at `http://localhost:3000`
+
+### Testing
+
+0. Create a `.env.test` file based on the `.env.example` and configure your test environment variables.
+1. Ensure the test database is set up by running: `npm run test:db:reset`
+2. Run tests using: `npm test` for all tests, `npm run test:unit` for unit tests, or `npm run test:integration` for integration tests.

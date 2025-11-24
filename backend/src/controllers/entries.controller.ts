@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { readData, validateFields, writeData } from "../utils/index.js";
-import { Article, Entry } from "../types/index.js";
-import { randomUUID } from "crypto";
+import { validateFields } from "../utils/index.js";
+import { db } from "../db/index.js";
+import { articles, entries } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
 class EntryController {
   async addEntry(req: Request, res: Response) {
@@ -13,11 +14,8 @@ class EntryController {
         return;
       }
 
-      const articles = await readData("articles.json", "articles");
-      const article = articles.find(
-        (article: Article) => article.id === articleId
-      );
-
+      const [article] = await db.select().from(articles).where(eq(articles.id, articleId));
+      
       if (!article) {
         res.status(404).json({ error: "Article not found" });
         return;
@@ -29,17 +27,11 @@ class EntryController {
         return;
       }
 
-      const entries = await readData("entries.json", "entries");
-      const newEntry: Entry = {
-        id: randomUUID(),
+      const [newEntry] = await db.insert(entries).values({
         articleId,
         organization,
         data,
-        timestamp: new Date().toISOString(),
-      };
-
-      entries.push(newEntry);
-      await writeData("entries.json", "entries", entries);
+      }).returning();
 
       res.status(201).json(newEntry);
     } catch (error) {
