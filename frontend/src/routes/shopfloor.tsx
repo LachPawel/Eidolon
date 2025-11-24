@@ -10,11 +10,18 @@ export const Route = createFileRoute("/shopfloor")({
 
 function ShopFloor() {
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: articles, isLoading } = trpc.articles.list.useQuery();
 
   if (isLoading) return <div className="p-8">Loading...</div>;
 
   const selectedArticle = articles?.find((a) => a.id === selectedArticleId) as Article | undefined;
+
+  const filteredArticles = articles?.filter(
+    (article) =>
+      article.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.organization.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="p-8 container mx-auto">
@@ -23,8 +30,15 @@ function ShopFloor() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="border rounded-lg bg-card p-4">
           <h2 className="text-xl font-semibold mb-4">Select Article</h2>
+          <input
+            type="text"
+            placeholder="Search articles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md mb-3"
+          />
           <div className="space-y-2">
-            {articles?.map((article) => (
+            {filteredArticles?.map((article) => (
               <button
                 key={article.id}
                 onClick={() => setSelectedArticleId(article.id)}
@@ -100,8 +114,17 @@ function EntryForm({ article }: { article: Article }) {
             {field.fieldType === "number" && (
               <input
                 type="number"
-                value={Number(formValues[field.fieldKey] || "")}
-                onChange={(e) => handleFieldChange(field.fieldKey, Number(e.target.value))}
+                value={
+                  typeof formValues[field.fieldKey] === "number"
+                    ? String(formValues[field.fieldKey])
+                    : ""
+                }
+                onChange={(e) =>
+                  handleFieldChange(
+                    field.fieldKey,
+                    e.target.value === "" ? "" : Number(e.target.value)
+                  )
+                }
                 className="w-full px-3 py-2 border rounded-md"
                 required={field.validation?.required}
                 min={field.validation?.min}
