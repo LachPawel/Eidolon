@@ -5,17 +5,44 @@ import { eq, and, like } from "drizzle-orm";
 import { Article } from "../types/index.js";
 
 class ArticlesController {
-  async getArticles(_req: Request, res: Response) {
+  async getArticles(req: Request, res: Response) {
     try {
-      const allArticles = await db.query.articles.findMany({
-        with: {
-          fieldDefinitions: {
+      const { organization, status, search } = req.query;
+
+      let conditions = [];
+
+      if (typeof organization === "string") {
+        conditions.push(eq(articles.organization, organization));
+      }
+
+      if (typeof status === "string") {
+        conditions.push(eq(articles.status, status));
+      }
+
+      if (typeof search === "string" && search.length > 0) {
+        conditions.push(like(articles.name, `%${search}%`));
+      }
+
+      const allArticles = conditions.length > 0
+        ? await db.query.articles.findMany({
+            where: and(...conditions),
             with: {
-              validation: true,
+              fieldDefinitions: {
+                with: {
+                  validation: true,
+                },
+              },
             },
-          },
-        },
-      });
+          })
+        : await db.query.articles.findMany({
+            with: {
+              fieldDefinitions: {
+                with: {
+                  validation: true,
+                },
+              },
+            },
+          });
 
       const formattedArticles: Article[] = allArticles.map((article) => ({
         id: article.id,
@@ -68,7 +95,7 @@ class ArticlesController {
         updatedAt: article.updatedAt,
       }));
 
-      res.json(formattedArticles);
+      res.json({ articles: formattedArticles });
     } catch (error) {
       console.error("Error fetching articles:", error);
       res.status(500).json({ error: "Failed to fetch articles" });
@@ -88,7 +115,7 @@ class ArticlesController {
       if (!name || !organization) {
         return res
           .status(400)
-          .json({ error: "Name and organization are required" });
+          .json({ error: "Organization and Name are required" });
       }
 
       // Start transaction
@@ -114,6 +141,32 @@ class ArticlesController {
                 fieldLabel: field.fieldLabel,
                 fieldType: field.fieldType,
                 scope: "attribute",
+              })
+              .returning();
+
+            if (field.validation) {
+              await tx.insert(fieldValidations).values({
+                fieldDefinitionId: fieldDef.id,
+                required: field.validation.required ?? false,
+                min: field.validation.min?.toString(),
+                max: field.validation.max?.toString(),
+                options: field.validation.options,
+              });
+            }
+          }
+        }
+
+        // Insert shop floor fields
+        if (shopFloorFields && shopFloorFields.length > 0) {
+          for (const field of shopFloorFields) {
+            const [fieldDef] = await tx
+              .insert(fieldDefinitions)
+              .values({
+                articleId: newArticle.id,
+                fieldKey: field.fieldKey,
+                fieldLabel: field.fieldLabel,
+                fieldType: field.fieldType,
+                scope: "shop_floor",
               })
               .returning();
 

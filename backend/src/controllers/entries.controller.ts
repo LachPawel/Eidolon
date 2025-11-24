@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { validateFields } from "../utils/index.js";
 import { db } from "../db/index.js";
-import { entries, entryValues, fieldDefinitions } from "../db/schema.js";
+import { articles, entries, entryValues } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { Entry, EntryValueData, EntryValueUnion } from "../types/index.js";
 
@@ -56,10 +56,9 @@ class EntryController {
 
       // Fetch article with field definitions and validations
       const article = await db.query.articles.findFirst({
-        where: eq(entries.articleId, articleId),
+        where: eq(articles.id, articleId),
         with: {
           fieldDefinitions: {
-            where: eq(fieldDefinitions.scope, "shop_floor"),
             with: {
               validation: true,
             },
@@ -72,7 +71,9 @@ class EntryController {
       }
 
       // Convert field definitions to the format expected by validateFields
-      const schema = article.fieldDefinitions.map((fd) => ({
+      const schema = article.fieldDefinitions
+        .filter((fd) => fd.scope === "shop_floor")
+        .map((fd) => ({
         id: fd.id,
         fieldKey: fd.fieldKey,
         fieldLabel: fd.fieldLabel,
@@ -91,7 +92,7 @@ class EntryController {
       // Validate the entry data
       const validationErrors = validateFields(schema, values);
       if (validationErrors.length > 0) {
-        return res.status(400).json({ errors: validationErrors });
+        return res.status(400).json({ error: "Validation Failed", details: validationErrors });
       }
       // Start transaction
       const result = await db.transaction(async (tx) => {

@@ -18,17 +18,19 @@ describe('Entries API', () => {
         organization: 'Test Corp',
         name: 'Test Article',
         status: 'active',
-        shopFloorSchema: [
+        shopFloorFields: [
           {
-            key: 'weight',
-            label: 'Weight (kg)',
-            type: 'number',
+            fieldKey: 'weight',
+            fieldLabel: 'Weight (kg)',
+            fieldType: 'number',
+            scope: 'shop_floor',
             validation: { required: true, min: 10, max: 100 }
           },
           {
-            key: 'quality',
-            label: 'Quality Check',
-            type: 'select',
+            fieldKey: 'quality',
+            fieldLabel: 'Quality Check',
+            fieldType: 'select',
+            scope: 'shop_floor',
             validation: { required: true, options: ['Pass', 'Fail'] }
           }
         ]
@@ -40,31 +42,26 @@ describe('Entries API', () => {
   describe('POST /api/entries', () => {
     it('should create a valid entry', async () => {
       const entryData = {
-        articleId,
-        organization: 'Test Corp',
-        data: {
+        values: {
           weight: 50,
           quality: 'Pass'
         }
       };
 
       const res = await request(app)
-        .post('/api/entries')
+        .post(`/api/entries/${articleId}`)
         .send(entryData)
         .expect(201);
 
       expect(res.body).to.have.property('id');
-      expect(res.body.articleId).to.equal(articleId);
-      expect(res.body.data.weight).to.equal(50);
+      expect(res.body.articleId).to.equal(Number(articleId));
     });
 
     it('should reject entry with missing required field', async () => {
       const res = await request(app)
-        .post('/api/entries')
+        .post(`/api/entries/${articleId}`)
         .send({
-          articleId,
-          organization: 'Test Corp',
-          data: { quality: 'Pass' } // Missing 'weight'
+          values: { quality: 'Pass' } // Missing 'weight'
         })
         .expect(400);
 
@@ -74,11 +71,9 @@ describe('Entries API', () => {
 
     it('should reject entry with out-of-range number', async () => {
       const res = await request(app)
-        .post('/api/entries')
+        .post(`/api/entries/${articleId}`)
         .send({
-          articleId,
-          organization: 'Test Corp',
-          data: { weight: 150, quality: 'Pass' } // Weight > 100
+          values: { weight: 150, quality: 'Pass' } // Weight > 100
         })
         .expect(400);
 
@@ -89,11 +84,9 @@ describe('Entries API', () => {
 
     it('should reject entry with invalid select option', async () => {
       const res = await request(app)
-        .post('/api/entries')
+        .post(`/api/entries/${articleId}`)
         .send({
-          articleId,
-          organization: 'Test Corp',
-          data: { weight: 50, quality: 'Maybe' } // Invalid option
+          values: { weight: 50, quality: 'Maybe' } // Invalid option
         })
         .expect(400);
 
@@ -104,11 +97,9 @@ describe('Entries API', () => {
 
     it('should return 404 for non-existent article', async () => {
       const res = await request(app)
-        .post('/api/entries')
+        .post('/api/entries/999999')
         .send({
-          articleId: '00000000-0000-0000-0000-000000000000',
-          organization: 'Test',
-          data: {}
+          values: {}
         })
         .expect(404);
 
