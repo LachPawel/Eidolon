@@ -15,6 +15,8 @@
     "test:db:clean": "docker compose down postgres-test -v",
     "test:db:reset": "pnpm test:db:clean && docker compose up -d postgres-test && pnpm db:push:test",
     "pretest:integration": "docker compose up -d postgres-test && pnpm db:push:test",
+    "db:setup": "docker compose up -d postgres && pnpm db:push",
+    "db:clean": "docker compose down postgres -v",
     "db:push": "npx drizzle-kit push",
     "db:push:test": "npx drizzle-kit push --config=drizzle.config.test.ts"
   },
