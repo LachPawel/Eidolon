@@ -21,18 +21,21 @@ ENV VITE_API_URL=$VITE_API_URL
 
 RUN pnpm run build
 
-# Production stage - serve with nginx
-FROM nginx:alpine AS runner
+# Production stage - use simple static server (Railway compatible)
+FROM node:20-alpine AS runner
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+WORKDIR /app
+
+# Install serve globally for static file serving
+RUN npm install -g serve
 
 # Copy built assets from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist ./dist
 
-# Railway uses dynamic PORT
-ENV PORT=80
-EXPOSE 80
+# Railway uses PORT env variable
+ENV PORT=3000
 
-# Use envsubst to replace $PORT in nginx config at runtime
-CMD ["/bin/sh", "-c", "envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+EXPOSE 3000
+
+# Serve the static files (-s for SPA mode, -l for port)
+CMD ["sh", "-c", "serve -s dist -l $PORT"]
