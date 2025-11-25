@@ -1,8 +1,11 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { router, publicProcedure } from "../trpc.js";
 import { db } from "../db/index.js";
 import { entries, entryValues, articles } from "../db/schema.js";
 import { eq } from "drizzle-orm";
+import { validateFields } from "../utils/validation.js";
+import { FieldDefinition } from "../types/index.js";
 
 export const entriesRouter = router({
   list: publicProcedure
@@ -29,7 +32,16 @@ export const entriesRouter = router({
         values: entry.values.reduce(
           (acc, val) => {
             const key = val.fieldDefinition.fieldKey;
-            acc[key] = val.valueText ?? val.valueNumber ?? val.valueBoolean ?? null;
+            // Convert number strings back to numbers
+            if (val.valueNumber !== null) {
+              acc[key] = Number(val.valueNumber);
+            } else if (val.valueText !== null) {
+              acc[key] = val.valueText;
+            } else if (val.valueBoolean !== null) {
+              acc[key] = val.valueBoolean;
+            } else {
+              acc[key] = null;
+            }
             return acc;
           },
           {} as Record<string, string | number | boolean | null>
@@ -59,10 +71,36 @@ export const entriesRouter = router({
         });
 
         if (!article) {
-          throw new Error("Article not found");
+          throw new TRPCError({ code: "NOT_FOUND", message: "Article not found" });
         }
 
         const shopFloorFields = article.fieldDefinitions.filter((fd) => fd.scope === "shop_floor");
+
+        // Convert to FieldDefinition format for validation
+        const fieldSchema: FieldDefinition[] = shopFloorFields.map((fd) => ({
+          id: fd.id,
+          fieldKey: fd.fieldKey,
+          fieldLabel: fd.fieldLabel,
+          fieldType: fd.fieldType as "text" | "number" | "boolean" | "select",
+          scope: fd.scope as "attribute" | "shop_floor",
+          validation: fd.validation
+            ? {
+                required: fd.validation.required ?? false,
+                min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                max: fd.validation.max ? Number(fd.validation.max) : undefined,
+                options: fd.validation.options ?? undefined,
+              }
+            : undefined,
+        }));
+
+        // Validate field values
+        const validationErrors = validateFields(fieldSchema, input.values);
+        if (validationErrors.length > 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: validationErrors.join(", "),
+          });
+        }
 
         const [newEntry] = await tx
           .insert(entries)
@@ -75,7 +113,10 @@ export const entriesRouter = router({
           const fieldDef = shopFloorFields.find((fd) => fd.fieldKey === fieldKey);
 
           if (!fieldDef) {
-            throw new Error(`Field ${fieldKey} not found in article schema`);
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Field ${fieldKey} not found in article schema`,
+            });
           }
 
           let valueText: string | null = null;

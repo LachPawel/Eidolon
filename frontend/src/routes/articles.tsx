@@ -1,15 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { trpc } from "@/trpc";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
 import type { Article } from "@/types";
+import { Plus, Search, Pencil, Trash2, Settings2, Factory, X, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/articles")({
   component: Articles,
 });
 
-function Articles() {
-  const [showAddForm, setShowAddForm] = useState(false);
+export function Articles() {
+  const [showForm, setShowForm] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -47,70 +51,102 @@ function Articles() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (isLoading) return <div className="p-8">Loading...</div>;
+  const handleEdit = (article: Article) => {
+    setEditingArticle(article);
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingArticle(null);
+  };
 
   const allArticles = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
-    <div className="p-8 container mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Articles</h1>
-        <Button onClick={() => setShowAddForm(true)}>Add Article</Button>
-      </div>
+    <div className="min-h-screen font-sans text-zinc-900 bg-white">
+      <div className="container mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Article Management</h1>
+            <p className="text-zinc-500">Define and manage your manufacturing catalog.</p>
+          </div>
+          <Button onClick={() => setShowForm(true)} className="gap-2">
+            <Plus size={18} />
+            Create Article
+          </Button>
+        </div>
 
-      {showAddForm && <AddArticleForm onClose={() => setShowAddForm(false)} />}
+        <div className="mb-6 relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search articles by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 shadow-sm transition-all"
+          />
+        </div>
 
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search articles..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-3 py-2 border rounded-md"
-        />
-      </div>
+        <div className="border border-zinc-200 rounded-xl overflow-hidden shadow-sm bg-white">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium uppercase tracking-wider text-xs">
+              <tr>
+                <th className="px-6 py-4">Name</th>
+                <th className="px-6 py-4">Organization</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <Settings2 size={14} /> Attributes
+                  </div>
+                </th>
+                <th className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <Factory size={14} /> Shop Floor
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-400">
+                    Loading articles...
+                  </td>
+                </tr>
+              ) : allArticles.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-400">
+                    No articles found.
+                  </td>
+                </tr>
+              ) : (
+                allArticles.map((article) => (
+                  <ArticleRow
+                    key={article.id}
+                    article={article}
+                    onEdit={() => handleEdit(article)}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-      <div className="border rounded-lg bg-card text-card-foreground shadow-sm">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                Name
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                Organization
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                Status
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                Shop Floor Fields
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                Attribute Fields
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {allArticles.map((article) => (
-              <ArticleRow key={article.id} article={article} />
-            ))}
-          </tbody>
-        </table>
         {hasNextPage && (
-          <div ref={loadMoreRef} className="p-4 text-center">
-            {isFetchingNextPage ? "Loading more..." : "Load more"}
+          <div ref={loadMoreRef} className="py-8 text-center text-zinc-400">
+            {isFetchingNextPage ? "Loading more..." : "Scroll to load more"}
           </div>
         )}
       </div>
+
+      {showForm && <ArticleForm initialData={editingArticle} onClose={handleCloseForm} />}
     </div>
   );
 }
 
-function ArticleRow({ article }: { article: Article }) {
+function ArticleRow({ article, onEdit }: { article: Article; onEdit: () => void }) {
   const utils = trpc.useUtils();
   const deleteArticle = trpc.articles.delete.useMutation({
     onSuccess: () => {
@@ -118,41 +154,46 @@ function ArticleRow({ article }: { article: Article }) {
     },
   });
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (confirm(`Are you sure you want to delete "${article.name}"?`)) {
       deleteArticle.mutate({ id: article.id });
     }
   };
 
   return (
-    <tr className="border-b transition-colors hover:bg-muted/50">
-      <td className="p-4 align-middle">{article.name}</td>
-      <td className="p-4 align-middle">{article.organization}</td>
-      <td className="p-4 align-middle">
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-            article.status === "active"
-              ? "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20"
-              : article.status === "draft"
-                ? "bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20"
-                : "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"
-          }`}
-        >
+    <tr className="group hover:bg-zinc-50/50 transition-colors">
+      <td className="px-6 py-4 font-medium text-zinc-900">{article.name}</td>
+      <td className="px-6 py-4 text-zinc-600">{article.organization}</td>
+      <td className="px-6 py-4">
+        <Badge variant={article.status === "active" ? "default" : "secondary"}>
           {article.status}
-        </span>
+        </Badge>
       </td>
-      <td className="p-4 align-middle">{article.shopFloorFields?.length || 0}</td>
-      <td className="p-4 align-middle">{article.attributeFields?.length || 0}</td>
-      <td className="p-4 align-middle">
-        <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleteArticle.isPending}>
-          {deleteArticle.isPending ? "Deleting..." : "Delete"}
-        </Button>
+      <td className="px-6 py-4 text-zinc-600">{article.attributeFields?.length || 0} fields</td>
+      <td className="px-6 py-4 text-zinc-600">{article.shopFloorFields?.length || 0} fields</td>
+      <td className="px-6 py-4 text-right">
+        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
+            <Pencil size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={handleDelete}
+            disabled={deleteArticle.isPending}
+          >
+            <Trash2 size={14} />
+          </Button>
+        </div>
       </td>
     </tr>
   );
 }
 
 type FieldInput = {
+  id?: number;
   fieldKey: string;
   fieldLabel: string;
   fieldType: "text" | "number" | "boolean" | "select";
@@ -165,7 +206,13 @@ type FieldInput = {
   };
 };
 
-function AddArticleForm({ onClose }: { onClose: () => void }) {
+function ArticleForm({
+  initialData,
+  onClose,
+}: {
+  initialData: Article | null;
+  onClose: () => void;
+}) {
   const utils = trpc.useUtils();
   const createArticle = trpc.articles.create.useMutation({
     onSuccess: () => {
@@ -173,23 +220,50 @@ function AddArticleForm({ onClose }: { onClose: () => void }) {
       onClose();
     },
   });
-
-  const [formData, setFormData] = useState({
-    name: "",
-    organization: "",
-    status: "draft" as "draft" | "active" | "archived",
+  const updateArticle = trpc.articles.update.useMutation({
+    onSuccess: () => {
+      utils.articles.list.invalidate();
+      onClose();
+    },
   });
 
-  const [attributeFields, setAttributeFields] = useState<FieldInput[]>([]);
-  const [shopFloorFields, setShopFloorFields] = useState<FieldInput[]>([]);
+  const [formData, setFormData] = useState({
+    name: initialData?.name || "",
+    organization: initialData?.organization || "",
+    status: (initialData?.status || "draft") as "draft" | "active" | "archived",
+  });
+
+  const [attributeFields, setAttributeFields] = useState<FieldInput[]>(
+    initialData?.attributeFields?.map((f) => ({
+      ...f,
+      fieldType: f.fieldType as FieldInput["fieldType"],
+      validation: f.validation || { required: false },
+    })) || []
+  );
+  const [shopFloorFields, setShopFloorFields] = useState<FieldInput[]>(
+    initialData?.shopFloorFields?.map((f) => ({
+      ...f,
+      fieldType: f.fieldType as FieldInput["fieldType"],
+      validation: f.validation || { required: false },
+    })) || []
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createArticle.mutate({
-      ...formData,
-      attributeFields,
-      shopFloorFields,
-    });
+    if (initialData) {
+      updateArticle.mutate({
+        id: initialData.id,
+        ...formData,
+        attributeFields,
+        shopFloorFields,
+      });
+    } else {
+      createArticle.mutate({
+        ...formData,
+        attributeFields,
+        shopFloorFields,
+      });
+    }
   };
 
   const addField = (scope: "attribute" | "shop_floor") => {
@@ -230,106 +304,164 @@ function AddArticleForm({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const isPending = createArticle.isPending || updateArticle.isPending;
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-background rounded-lg p-6 max-w-3xl w-full my-8">
-        <h2 className="text-2xl font-bold mb-4">Add New Article</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border rounded-md"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Organization</label>
-              <input
-                type="text"
-                value={formData.organization}
-                onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                className="w-full px-3 py-2 border rounded-md"
-                required
-              />
-            </div>
-          </div>
-
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden flex flex-col max-h-[90vh]"
+      >
+        <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
           <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <select
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as "draft" | "active" | "archived",
-                })
-              }
-              className="w-full px-3 py-2 border rounded-md"
-            >
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="archived">Archived</option>
-            </select>
+            <h2 className="text-2xl font-bold text-zinc-900">
+              {initialData ? "Edit Article" : "Create Article"}
+            </h2>
+            <p className="text-zinc-500 text-sm">Configure article properties and schema.</p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-zinc-100 rounded-full transition-colors"
+          >
+            <X size={20} className="text-zinc-500" />
+          </button>
+        </div>
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold">Attribute Fields</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => addField("attribute")}
-              >
-                Add Field
-              </Button>
+        <div className="flex-1 overflow-y-auto p-6">
+          <form id="article-form" onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-700">Article Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 transition-all"
+                  placeholder="e.g. Injection Molded Casing"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-700">Organization / Client</label>
+                <input
+                  type="text"
+                  value={formData.organization}
+                  onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 transition-all"
+                  placeholder="e.g. Acme Corp"
+                  required
+                />
+              </div>
             </div>
-            {attributeFields.map((field, index) => (
-              <FieldBuilder
-                key={index}
-                field={field}
-                onUpdate={(updates) => updateField("attribute", index, updates)}
-                onRemove={() => removeField("attribute", index)}
-              />
-            ))}
-          </div>
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold">Shop Floor Fields</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => addField("shop_floor")}
-              >
-                Add Field
-              </Button>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-700">Status</label>
+              <div className="flex gap-4">
+                {["draft", "active", "archived"].map((status) => (
+                  <label
+                    key={status}
+                    className={`flex-1 cursor-pointer border rounded-lg p-3 flex items-center justify-between transition-all ${formData.status === status ? "bg-zinc-900 text-white border-zinc-900 shadow-md" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="status"
+                        value={status}
+                        checked={formData.status === status}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            status: e.target.value as "draft" | "active" | "archived",
+                          })
+                        }
+                        className="hidden"
+                      />
+                      <span className="capitalize font-medium">{status}</span>
+                    </div>
+                    {formData.status === status && <CheckCircle2 size={16} />}
+                  </label>
+                ))}
+              </div>
             </div>
-            {shopFloorFields.map((field, index) => (
-              <FieldBuilder
-                key={index}
-                field={field}
-                onUpdate={(updates) => updateField("shop_floor", index, updates)}
-                onRemove={() => removeField("shop_floor", index)}
-              />
-            ))}
-          </div>
 
-          <div className="flex gap-2 border-t pt-4">
-            <Button type="submit" disabled={createArticle.isPending}>
-              {createArticle.isPending ? "Creating..." : "Create Article"}
-            </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </div>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <Settings2 className="text-zinc-400" size={18} />
+                  <h3 className="text-lg font-bold text-zinc-900">Attribute Fields</h3>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addField("attribute")}
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Add Field
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {attributeFields.length === 0 && (
+                  <div className="text-center py-8 border-2 border-dashed border-zinc-100 rounded-xl text-zinc-400 text-sm">
+                    No attribute fields defined.
+                  </div>
+                )}
+                {attributeFields.map((field, index) => (
+                  <FieldBuilder
+                    key={index}
+                    field={field}
+                    onUpdate={(updates) => updateField("attribute", index, updates)}
+                    onRemove={() => removeField("attribute", index)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <Factory className="text-zinc-400" size={18} />
+                  <h3 className="text-lg font-bold text-zinc-900">Shop Floor Fields</h3>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addField("shop_floor")}
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Add Field
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {shopFloorFields.length === 0 && (
+                  <div className="text-center py-8 border-2 border-dashed border-zinc-100 rounded-xl text-zinc-400 text-sm">
+                    No shop floor fields defined.
+                  </div>
+                )}
+                {shopFloorFields.map((field, index) => (
+                  <FieldBuilder
+                    key={index}
+                    field={field}
+                    onUpdate={(updates) => updateField("shop_floor", index, updates)}
+                    onRemove={() => removeField("shop_floor", index)}
+                  />
+                ))}
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex justify-end gap-3">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="article-form" disabled={isPending} className="min-w-[120px]">
+            {isPending ? "Saving..." : initialData ? "Update Article" : "Create Article"}
+          </Button>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -353,10 +485,11 @@ function FieldBuilder({
   };
 
   const handleLabelChange = (label: string) => {
-    onUpdate({
-      fieldLabel: label,
-      fieldKey: generateFieldKey(label),
-    });
+    const updates: Partial<FieldInput> = { fieldLabel: label };
+    if (!field.fieldKey || field.fieldKey === generateFieldKey(field.fieldLabel)) {
+      updates.fieldKey = generateFieldKey(label);
+    }
+    onUpdate(updates);
   };
 
   const addOption = () => {
@@ -382,28 +515,32 @@ function FieldBuilder({
   };
 
   return (
-    <div className="border rounded-md p-4 mb-3 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium mb-1">Field Label</label>
+    <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 space-y-4 transition-all hover:border-zinc-300 hover:shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-5">
+          <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">
+            Label
+          </label>
           <input
             type="text"
             value={field.fieldLabel}
             onChange={(e) => handleLabelChange(e.target.value)}
-            className="w-full px-2 py-1 border rounded text-sm"
-            placeholder="e.g., Batch Number"
+            className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+            placeholder="Field Name"
             required
           />
         </div>
-        <div>
-          <label className="block text-xs font-medium mb-1">Field Type</label>
+        <div className="md:col-span-4">
+          <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">
+            Type
+          </label>
           <select
             value={field.fieldType}
             onChange={(e) => {
               const newType = e.target.value as FieldInput["fieldType"];
               onUpdate({ fieldType: newType });
             }}
-            className="w-full px-2 py-1 border rounded text-sm"
+            className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
           >
             <option value="text">Text</option>
             <option value="number">Number</option>
@@ -411,10 +548,21 @@ function FieldBuilder({
             <option value="select">Select</option>
           </select>
         </div>
+        <div className="md:col-span-3 flex items-end justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
+            <Trash2 size={14} className="mr-2" /> Remove
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 text-sm">
+      <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-zinc-200/50">
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
           <input
             type="checkbox"
             checked={field.validation?.required || false}
@@ -423,14 +571,15 @@ function FieldBuilder({
                 validation: { ...field.validation, required: e.target.checked },
               })
             }
+            className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
           />
-          Required
+          <span className="font-medium text-zinc-700">Required Field</span>
         </label>
 
         {field.fieldType === "number" && (
           <>
             <div className="flex items-center gap-2">
-              <label className="text-xs">Min:</label>
+              <label className="text-xs font-medium text-zinc-500 uppercase">Min</label>
               <input
                 type="number"
                 value={field.validation?.min ?? ""}
@@ -442,12 +591,11 @@ function FieldBuilder({
                     },
                   })
                 }
-                className="w-20 px-2 py-1 border rounded text-sm"
-                placeholder="Optional"
+                className="w-20 px-2 py-1 bg-white border border-zinc-200 rounded text-sm"
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs">Max:</label>
+              <label className="text-xs font-medium text-zinc-500 uppercase">Max</label>
               <input
                 type="number"
                 value={field.validation?.max ?? ""}
@@ -459,21 +607,18 @@ function FieldBuilder({
                     },
                   })
                 }
-                className="w-20 px-2 py-1 border rounded text-sm"
-                placeholder="Optional"
+                className="w-20 px-2 py-1 bg-white border border-zinc-200 rounded text-sm"
               />
             </div>
           </>
         )}
-
-        <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="ml-auto">
-          Remove
-        </Button>
       </div>
 
       {field.fieldType === "select" && (
-        <div className="space-y-2">
-          <label className="block text-xs font-medium">Options</label>
+        <div className="bg-zinc-100/50 p-3 rounded-lg space-y-2">
+          <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">
+            Options
+          </label>
           <div className="flex gap-2">
             <input
               type="text"
@@ -485,10 +630,10 @@ function FieldBuilder({
                   addOption();
                 }
               }}
-              className="flex-1 px-2 py-1 border rounded text-sm"
-              placeholder="Add option and press Enter"
+              className="flex-1 px-3 py-1.5 bg-white border border-zinc-200 rounded-md text-sm"
+              placeholder="Type option and press Enter"
             />
-            <Button type="button" size="sm" onClick={addOption}>
+            <Button type="button" size="sm" variant="secondary" onClick={addOption}>
               Add
             </Button>
           </div>
@@ -497,15 +642,15 @@ function FieldBuilder({
               {field.validation.options.map((option, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-1 bg-secondary px-2 py-1 rounded text-sm"
+                  className="flex items-center gap-1 bg-white border border-zinc-200 px-2 py-1 rounded-md text-sm shadow-sm"
                 >
                   <span>{option}</span>
                   <button
                     type="button"
                     onClick={() => removeOption(index)}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-zinc-400 hover:text-red-500 ml-1"
                   >
-                    ×
+                    <X size={12} />
                   </button>
                 </div>
               ))}
