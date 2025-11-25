@@ -1,4 +1,4 @@
-import { FieldDefinition } from "../types/index.js";
+import type { FieldDefinition } from "../types/index.js";
 
 export const validateFields = (
   schema: FieldDefinition[],

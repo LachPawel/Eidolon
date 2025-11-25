@@ -91,15 +91,15 @@ export function Articles() {
   };
 
   // Map Algolia hits to Article format for display
-  const algoliaArticles: Article[] = (algoliaQuery.data?.hits ?? []).map((hit) => ({
+  const algoliaArticles = (algoliaQuery.data?.hits ?? []).map((hit) => ({
     id: parseInt(hit.objectID, 10),
     name: hit.name,
     organization: hit.organization,
     status: hit.status as "draft" | "active" | "archived",
-    attributeFields: [],
-    shopFloorFields: [],
-    createdAt: new Date(hit.createdAt),
-    updatedAt: new Date(hit.createdAt),
+    attributeFields: [] as Article["attributeFields"],
+    shopFloorFields: [] as Article["shopFloorFields"],
+    createdAt: new Date(hit.createdAt).toISOString(),
+    updatedAt: new Date(hit.createdAt).toISOString(),
   }));
 
   // Use Algolia results when searching with Algolia, otherwise PostgreSQL
@@ -486,10 +486,11 @@ function ArticleForm({
               materialType={formData.organization}
               existingFieldKeys={[...attributeFields, ...shopFloorFields].map((f) => f.fieldKey)}
               onAddField={(suggestedField) => {
-                const newField = {
+                const newField: FieldInput = {
                   fieldKey: suggestedField.fieldKey,
                   fieldLabel: suggestedField.fieldLabel,
                   fieldType: suggestedField.fieldType as "text" | "number" | "boolean" | "select",
+                  scope: "attribute",
                   validation: {},
                 };
                 setAttributeFields([...attributeFields, newField]);

@@ -1,4 +1,4 @@
-import { algoliasearch, SearchClient } from "algoliasearch";
+import { algoliasearch, type SearchClient } from "algoliasearch";
 
 // Lazy-initialized Algolia client
 let client: SearchClient | null = null;

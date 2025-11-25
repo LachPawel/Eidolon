@@ -42,7 +42,7 @@ export function AIInputHint({
       enabled: fieldKey.length > 0 && organization.length > 0,
       staleTime: 10000, // Cache for 10 seconds
       retry: 1,
-      keepPreviousData: true,
+      placeholderData: (prev) => prev,
     }
   );
 

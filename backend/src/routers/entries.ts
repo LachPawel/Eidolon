@@ -5,7 +5,7 @@ import { db } from "../db/index.js";
 import { entries, entryValues, articles } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { validateFields } from "../utils/validation.js";
-import { FieldDefinition } from "../types/index.js";
+import type { FieldDefinition } from "../types/index.js";
 
 export const entriesRouter = router({
   list: publicProcedure
