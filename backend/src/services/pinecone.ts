@@ -394,3 +394,141 @@ export async function deleteArticleFromPinecone(articleId: number): Promise<void
 export function isPineconeConfigured(): boolean {
   return !!(process.env.PINECONE_API_KEY && process.env.OPENAI_API_KEY);
 }
+
+/**
+ * Validate a shop floor value using AI or get advice
+ */
+export async function validateValueWithAI(
+  articleName: string,
+  organization: string,
+  fieldLabel: string,
+  fieldType: string,
+  value?: string | number
+): Promise<{ isValid: boolean; warning?: string; suggestion?: string }> {
+  const openai = getOpenAI();
+  if (!openai) return { isValid: true };
+
+  try {
+    const isAdviceRequest = value === undefined || value === "";
+
+    const prompt = isAdviceRequest
+      ? `
+      Context: Manufacturing shop floor data entry.
+      Article: "${articleName}" by "${organization}".
+      Field: "${fieldLabel}" (Type: ${fieldType}).
+
+      Task: Provide a short, helpful hint about what is expected for this field.
+      - What is the typical range or format?
+      - Any specific units or conventions?
+      - Keep it very brief (max 15 words).
+
+      Response format (JSON):
+      {
+        "isValid": true,
+        "suggestion": "string (max 15 words)"
+      }
+      `
+      : `
+      Context: Manufacturing shop floor data entry.
+      Article: "${articleName}" by "${organization}".
+      Field: "${fieldLabel}" (Type: ${fieldType}).
+      User Input: "${value}".
+
+      Task: Validate if the input is appropriate for this field.
+      - If it's a number, is it within a realistic range for this context?
+      - If it's text, is it semantically relevant? (e.g. if field is "Expiry Date" and input is "Hello", it's invalid).
+      - If it seems correct, return isValid: true.
+      - If it seems wrong or unusual, return isValid: false and a short warning message.
+
+      Response format (JSON):
+      {
+        "isValid": boolean,
+        "warning": "string (optional, max 15 words)",
+        "suggestion": "string (optional, max 10 words)"
+      }
+      `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content) return { isValid: true };
+
+    return JSON.parse(content);
+  } catch (error) {
+    console.error("[AI Validation] Error:", error);
+    return { isValid: true };
+  }
+}
+
+/**
+ * Analyze article schema for improvements
+ */
+export async function analyzeSchemaWithAI(
+  articleName: string,
+  organization: string,
+  fields: { fieldKey: string; fieldLabel: string; fieldType: string }[]
+): Promise<{
+  duplicates: { fieldKey: string; message: string }[];
+  missing: { fieldLabel: string; fieldType: string; reason: string }[];
+  nameFeedback?: string;
+}> {
+  const openai = getOpenAI();
+  if (!openai) return { duplicates: [], missing: [] };
+
+  try {
+    const prompt = `
+    Context: Manufacturing article schema definition.
+    Article: "${articleName}" by "${organization}".
+    Current Fields: ${JSON.stringify(fields.map((f) => ({ label: f.fieldLabel, type: f.fieldType })))}.
+
+    Task: Analyze the schema.
+    1. Identify semantically duplicate fields (e.g. "Weight" and "Mass").
+    2. Identify missing critical fields for this type of item.
+    3. Check if the article name is descriptive enough.
+
+    Response format (JSON):
+    {
+      "duplicates": [{ "fieldLabel": "string", "message": "string" }],
+      "missing": [{ "fieldLabel": "string", "fieldType": "string", "reason": "string" }],
+      "nameFeedback": "string (optional, only if name is poor)"
+    }
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content) return { duplicates: [], missing: [] };
+
+    const result = JSON.parse(content);
+
+    // Map back to field keys
+    const duplicates = (result.duplicates || []).map(
+      (d: { fieldLabel: string; message: string }) => {
+        const field = fields.find((f) => f.fieldLabel === d.fieldLabel);
+        return {
+          fieldKey: field?.fieldKey || d.fieldLabel,
+          message: d.message,
+        };
+      }
+    );
+
+    return {
+      duplicates,
+      missing: result.missing || [],
+      nameFeedback: result.nameFeedback,
+    };
+  } catch (error) {
+    console.error("[AI Schema Analysis] Error:", error);
+    return { duplicates: [], missing: [] };
+  }
+}

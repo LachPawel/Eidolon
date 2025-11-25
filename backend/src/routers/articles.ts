@@ -8,6 +8,7 @@ import {
   syncArticleToAlgolia,
   deleteArticleFromAlgolia,
   isAlgoliaConfigured,
+  bulkSyncArticlesToAlgolia,
 } from "../services/algolia.js";
 import {
   findSimilarArticles,
@@ -16,6 +17,9 @@ import {
   indexArticle,
   deleteArticleFromPinecone,
   isPineconeConfigured,
+  bulkIndexArticles,
+  validateValueWithAI,
+  analyzeSchemaWithAI,
 } from "../services/pinecone.js";
 import {
   measurePerformance,
@@ -534,6 +538,147 @@ export const articlesRouter = router({
   exportPerformanceMetrics: publicProcedure.query(() => {
     return exportMetrics();
   }),
+
+  // ============================================
+  // Sync all articles to search services
+  // ============================================
+  syncAllToSearchServices: publicProcedure.mutation(async () => {
+    // Fetch all articles with their field definitions
+    const allArticles = await db.query.articles.findMany({
+      with: {
+        fieldDefinitions: true,
+      },
+    });
+
+    const articlesToSync = allArticles.map((article) => ({
+      id: article.id,
+      name: article.name,
+      organization: article.organization,
+      status: article.status,
+      fieldDefinitions: article.fieldDefinitions.map((fd) => ({
+        fieldKey: fd.fieldKey,
+        fieldLabel: fd.fieldLabel,
+        fieldType: fd.fieldType,
+      })),
+    }));
+
+    // Sync to Algolia
+    await bulkSyncArticlesToAlgolia(articlesToSync);
+
+    // Sync to Pinecone
+    await bulkIndexArticles(articlesToSync);
+
+    return {
+      synced: articlesToSync.length,
+      message: `Synced ${articlesToSync.length} articles to Algolia and Pinecone`,
+    };
+  }),
+
+  // ============================================
+  // Get AI input hints for shop floor values
+  // ============================================
+  getInputHint: publicProcedure
+    .input(
+      z.object({
+        articleName: z.string(),
+        organization: z.string(),
+        fieldKey: z.string(),
+        fieldLabel: z.string(),
+        fieldType: z.string(),
+        currentValue: z.union([z.string(), z.number()]).optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Get validation hints based on similar articles
+      const hints = await getValidationHints(input.organization, input.fieldKey);
+
+      // Generate context-aware tips
+      const tips: string[] = [];
+      let aiValidation = null;
+
+      // Validate with AI or get advice
+      aiValidation = await validateValueWithAI(
+        input.articleName,
+        input.organization,
+        input.fieldLabel,
+        input.fieldType,
+        input.currentValue
+      );
+
+      if (aiValidation) {
+        if (!aiValidation.isValid && aiValidation.warning) {
+          tips.push(`⚠️ ${aiValidation.warning}`);
+        }
+        if (aiValidation.suggestion) {
+          tips.push(`💡 ${aiValidation.suggestion}`);
+        }
+      }
+
+      if (input.fieldType === "number") {
+        if (
+          hints.suggestedValidation?.min !== undefined &&
+          hints.suggestedValidation?.max !== undefined
+        ) {
+          // Only show range hint if value is not provided or if it's out of range
+          const val = Number(input.currentValue);
+          if (
+            !input.currentValue ||
+            val < hints.suggestedValidation.min ||
+            val > hints.suggestedValidation.max
+          ) {
+            tips.push(
+              `Typical range: ${hints.suggestedValidation.min} - ${hints.suggestedValidation.max}`
+            );
+          }
+        }
+
+        // Add industry-specific tips (only if no AI validation or if valid)
+        if (!aiValidation || aiValidation.isValid) {
+          const lowerName = `${input.articleName} ${input.fieldKey}`.toLowerCase();
+          if (lowerName.includes("temperature")) {
+            tips.push("Temperature is typically measured in °C");
+          } else if (lowerName.includes("pressure")) {
+            tips.push("Pressure is typically measured in bar or PSI");
+          } else if (lowerName.includes("weight") || lowerName.includes("mass")) {
+            tips.push("Weight is typically measured in kg or g");
+          } else if (lowerName.includes("time") || lowerName.includes("duration")) {
+            tips.push("Time is typically measured in seconds or minutes");
+          }
+        }
+      }
+
+      if (hints.hint && (!aiValidation || aiValidation.isValid)) {
+        tips.push(hints.hint);
+      }
+
+      return {
+        tips,
+        suggestedValidation: hints.suggestedValidation,
+        hasHints: tips.length > 0,
+        isValid: aiValidation?.isValid ?? true,
+      };
+    }),
+
+  // ============================================
+  // Analyze Schema (Article Definition)
+  // ============================================
+  analyzeSchema: publicProcedure
+    .input(
+      z.object({
+        articleName: z.string(),
+        organization: z.string(),
+        fields: z.array(
+          z.object({
+            fieldKey: z.string(),
+            fieldLabel: z.string(),
+            fieldType: z.string(),
+          })
+        ),
+      })
+    )
+    .query(async ({ input }) => {
+      return analyzeSchemaWithAI(input.articleName, input.organization, input.fields);
+    }),
 
   // ============================================
   // Service Status

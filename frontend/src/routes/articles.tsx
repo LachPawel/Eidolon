@@ -4,8 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
 import type { Article } from "@/types";
-import { Plus, Search, Pencil, Trash2, Settings2, Factory, X, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Settings2,
+  Factory,
+  X,
+  CheckCircle2,
+  Zap,
+  Database,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import { AIFieldHints } from "@/components/AIFieldHints";
+import { AISchemaAdvisor } from "@/components/AISchemaAdvisor";
 
 export const Route = createFileRoute("/articles")({
   component: Articles,
@@ -16,6 +29,7 @@ export function Articles() {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [useAlgolia, setUseAlgolia] = useState(true); // Default to fast Algolia search
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,17 +40,32 @@ export function Articles() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    trpc.articles.list.useInfiniteQuery(
-      { limit: 20, search: debouncedSearch || undefined },
-      {
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
-        placeholderData: (previousData) => previousData,
-      }
-    );
+  // PostgreSQL search (with pagination)
+  const postgresQuery = trpc.articles.list.useInfiniteQuery(
+    { limit: 20, search: debouncedSearch || undefined },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      placeholderData: (previousData) => previousData,
+      enabled: !useAlgolia,
+    }
+  );
+
+  // Algolia fast search
+  const algoliaQuery = trpc.articles.fastSearch.useQuery(
+    { query: debouncedSearch, hitsPerPage: 50 },
+    {
+      enabled: useAlgolia && debouncedSearch.length > 0,
+      staleTime: 5000,
+    }
+  );
+
+  // Combine loading states
+  const isLoading = useAlgolia ? algoliaQuery.isLoading : postgresQuery.isLoading;
+
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = postgresQuery;
 
   useEffect(() => {
-    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage || useAlgolia) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -49,7 +78,7 @@ export function Articles() {
 
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, useAlgolia]);
 
   const handleEdit = (article: Article) => {
     setEditingArticle(article);
@@ -61,31 +90,90 @@ export function Articles() {
     setEditingArticle(null);
   };
 
-  const allArticles = data?.pages.flatMap((page) => page.items) ?? [];
+  // Map Algolia hits to Article format for display
+  const algoliaArticles: Article[] = (algoliaQuery.data?.hits ?? []).map((hit) => ({
+    id: parseInt(hit.objectID, 10),
+    name: hit.name,
+    organization: hit.organization,
+    status: hit.status as "draft" | "active" | "archived",
+    attributeFields: [],
+    shopFloorFields: [],
+    createdAt: new Date(hit.createdAt),
+    updatedAt: new Date(hit.createdAt),
+  }));
+
+  // Use Algolia results when searching with Algolia, otherwise PostgreSQL
+  const allArticles =
+    useAlgolia && debouncedSearch
+      ? algoliaArticles
+      : (postgresQuery.data?.pages.flatMap((page) => page.items) ?? []);
 
   return (
     <div className="min-h-screen font-sans text-zinc-900 bg-white">
       <div className="container mx-auto px-6 py-12">
+        <ServiceStatus />
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight mb-2">Article Management</h1>
             <p className="text-zinc-500">Define and manage your manufacturing catalog.</p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="gap-2">
-            <Plus size={18} />
-            Create Article
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowForm(true)} className="gap-2">
+              <Plus size={18} />
+              Create Article
+            </Button>
+          </div>
         </div>
 
-        <div className="mb-6 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search articles by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 shadow-sm transition-all"
-          />
+        <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search articles by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 shadow-sm transition-all"
+            />
+          </div>
+
+          {/* Search engine toggle */}
+          <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-lg">
+            <button
+              onClick={() => setUseAlgolia(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                useAlgolia
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              <Zap size={14} className={useAlgolia ? "text-yellow-500" : ""} />
+              Algolia
+            </button>
+            <button
+              onClick={() => setUseAlgolia(false)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                !useAlgolia
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              <Database size={14} />
+              PostgreSQL
+            </button>
+          </div>
+
+          {/* Search performance indicator */}
+          {debouncedSearch && useAlgolia && algoliaQuery.data && (
+            <div className="text-xs text-zinc-500 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                <Zap size={12} />
+                {algoliaQuery.data.processingTimeMs}ms
+              </span>
+              <span>{algoliaQuery.data.nbHits} results</span>
+            </div>
+          )}
         </div>
 
         <div className="border border-zinc-200 rounded-xl overflow-hidden shadow-sm bg-white">
@@ -385,6 +473,29 @@ function ArticleForm({
               </div>
             </div>
 
+            {/* AI Schema Advisor - Deep analysis */}
+            <AISchemaAdvisor
+              articleName={formData.name}
+              organization={formData.organization}
+              fields={[...attributeFields, ...shopFloorFields]}
+            />
+
+            {/* AI Field Suggestions - powered by Pinecone */}
+            <AIFieldHints
+              articleName={formData.name}
+              materialType={formData.organization}
+              existingFieldKeys={[...attributeFields, ...shopFloorFields].map((f) => f.fieldKey)}
+              onAddField={(suggestedField) => {
+                const newField = {
+                  fieldKey: suggestedField.fieldKey,
+                  fieldLabel: suggestedField.fieldLabel,
+                  fieldType: suggestedField.fieldType as "text" | "number" | "boolean" | "select",
+                  validation: {},
+                };
+                setAttributeFields([...attributeFields, newField]);
+              }}
+            />
+
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                 <div className="flex items-center gap-2">
@@ -658,6 +769,27 @@ function FieldBuilder({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// Service status indicator
+function ServiceStatus() {
+  const { data } = trpc.articles.getSearchServicesStatus.useQuery();
+
+  if (!data) return null;
+
+  const allConfigured = data.algolia.configured && data.pinecone.configured;
+
+  if (allConfigured) return null; // Don't show if everything is working
+
+  return (
+    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+      <strong>⚠️ Search services not fully configured:</strong>
+      <ul className="mt-1 ml-4 list-disc">
+        {!data.algolia.configured && <li>Algolia: Set ALGOLIA_APP_ID and ALGOLIA_ADMIN_KEY</li>}
+        {!data.pinecone.configured && <li>Pinecone: Set PINECONE_API_KEY and OPENAI_API_KEY</li>}
+      </ul>
     </div>
   );
 }
