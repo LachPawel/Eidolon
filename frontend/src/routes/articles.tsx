@@ -11,7 +11,7 @@ export const Route = createFileRoute("/articles")({
   component: Articles,
 });
 
-function Articles() {
+export function Articles() {
   const [showForm, setShowForm] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
