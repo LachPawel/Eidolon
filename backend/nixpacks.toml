@@ -13,3 +13,4 @@ cmd = "npx drizzle-kit push && node dist/index.js"
 [variables]
 NPM_CONFIG_PRODUCTION = "false"
 NODE_ENV = "production"
+PORT = "3000"
