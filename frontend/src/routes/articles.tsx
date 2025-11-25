@@ -177,49 +177,51 @@ export function Articles() {
         </div>
 
         <div className="border border-zinc-200 rounded-xl overflow-hidden shadow-sm bg-white">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium uppercase tracking-wider text-xs">
-              <tr>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Organization</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Settings2 size={14} /> Attributes
-                  </div>
-                </th>
-                <th className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Factory size={14} /> Shop Floor
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {isLoading ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium uppercase tracking-wider text-xs">
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-400">
-                    Loading articles...
-                  </td>
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Organization</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Settings2 size={14} /> Attributes
+                    </div>
+                  </th>
+                  <th className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Factory size={14} /> Shop Floor
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ) : allArticles.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-400">
-                    No articles found.
-                  </td>
-                </tr>
-              ) : (
-                allArticles.map((article) => (
-                  <ArticleRow
-                    key={article.id}
-                    article={article}
-                    onEdit={() => handleEdit(article)}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-zinc-400">
+                      Loading articles...
+                    </td>
+                  </tr>
+                ) : allArticles.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-zinc-400">
+                      No articles found.
+                    </td>
+                  </tr>
+                ) : (
+                  allArticles.map((article) => (
+                    <ArticleRow
+                      key={article.id}
+                      article={article}
+                      onEdit={() => handleEdit(article)}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {hasNextPage && (
@@ -261,7 +263,7 @@ function ArticleRow({ article, onEdit }: { article: Article; onEdit: () => void 
       <td className="px-6 py-4 text-zinc-600">{article.attributeFields?.length || 0} fields</td>
       <td className="px-6 py-4 text-zinc-600">{article.shopFloorFields?.length || 0} fields</td>
       <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
             <Pencil size={14} />
           </Button>

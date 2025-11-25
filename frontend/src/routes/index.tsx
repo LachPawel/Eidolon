@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import React, { useState, useEffect, useMemo } from "react";
 import { DotBackground } from "@/components/DotBackground";
 import { motion } from "framer-motion";
@@ -104,7 +104,7 @@ function DisplayCard({
   return (
     <div
       className={cn(
-        "relative flex w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-xl border-2 bg-white/95 backdrop-blur-sm px-5 py-5 transition-all duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[22rem] after:bg-gradient-to-l after:from-zinc-50 after:to-transparent after:content-[''] hover:border-zinc-400 hover:bg-white [&>*]:flex [&>*]:items-center [&>*]:gap-2 shadow-sm hover:shadow-2xl hover:z-50 hover:scale-[1.02]",
+        "relative flex w-full max-w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-xl border-2 bg-white/95 backdrop-blur-sm px-5 py-5 transition-all duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-full after:bg-gradient-to-l after:from-zinc-50 after:to-transparent after:content-[''] hover:border-zinc-400 hover:bg-white [&>*]:flex [&>*]:items-center [&>*]:gap-2 shadow-sm hover:shadow-2xl hover:z-50 hover:scale-[1.02]",
         className
       )}
     >
@@ -139,7 +139,7 @@ function DisplayCard({
 
 function DisplayCards({ cards }: { cards: DisplayCardProps[] }) {
   return (
-    <div className="grid [grid-template-areas:'stack'] place-items-center opacity-100 animate-in fade-in-0 duration-700 py-10 perspective-1000">
+    <div className="grid grid-cols-1 gap-10 md:gap-0 md:[grid-template-areas:'stack'] place-items-center opacity-100 animate-in fade-in-0 duration-700 py-10 perspective-1000">
       {cards.map((cardProps, index) => (
         <DisplayCard key={index} {...cardProps} />
       ))}
@@ -155,7 +155,7 @@ const ShopFloorCards = () => {
       description: "Batch #8821 - In Progress",
       date: "Started 10:42 AM",
       aiHint: "Pressure drop detected. Recommend checking nozzle temp.",
-      className: "[grid-area:stack] hover:-translate-y-12 z-10 bg-white border-zinc-200",
+      className: "md:[grid-area:stack] md:hover:-translate-y-12 z-10 bg-white border-zinc-200",
     },
     {
       icon: <Hammer className="size-4 text-zinc-700" />,
@@ -164,7 +164,7 @@ const ShopFloorCards = () => {
       date: "Pending QC",
       aiHint: "Previous batch showed trend towards 58.5. Verify calibration.",
       className:
-        "[grid-area:stack] translate-x-12 translate-y-12 hover:-translate-y-2 z-20 bg-white border-zinc-200",
+        "md:[grid-area:stack] md:translate-x-12 md:translate-y-12 md:hover:-translate-y-2 z-20 bg-white border-zinc-200",
     },
     {
       icon: <ClipboardCheck className="size-4 text-zinc-700" />,
@@ -173,7 +173,7 @@ const ShopFloorCards = () => {
       date: "Scheduled 14:00",
       aiHint: "High defect rate in 'Finish' field recently. Focus on surface texture.",
       className:
-        "[grid-area:stack] translate-x-24 translate-y-24 hover:translate-y-10 z-30 bg-white border-zinc-200",
+        "md:[grid-area:stack] md:translate-x-24 md:translate-y-24 md:hover:translate-y-10 z-30 bg-white border-zinc-200",
     },
   ];
 
@@ -487,11 +487,13 @@ function EidolonLanding() {
               </p>
             </div>
 
-            <div className="flex flex-row gap-3 mb-10">
-              <Button size="lg" className="gap-4">
-                Start Defining <MoveRight className="w-4 h-4" />
+            <div className="flex flex-col sm:flex-row gap-3 mb-10 w-full sm:w-auto">
+              <Button size="lg" className="gap-4 w-full sm:w-auto" asChild>
+                <Link to="/articles">
+                  Start Defining <MoveRight className="w-4 h-4" />
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="gap-4">
+              <Button size="lg" variant="outline" className="gap-4 w-full sm:w-auto">
                 Schedule Demo <PhoneCall className="w-4 h-4" />
               </Button>
             </div>
@@ -554,8 +556,9 @@ function EidolonLanding() {
               <Button
                 variant="outline"
                 className="!text-black !border-zinc-300 hover:!bg-zinc-50 hover:!border-zinc-400"
+                asChild
               >
-                Explore Shop Floor App
+                <Link to="/shopfloor">Explore Shop Floor App</Link>
               </Button>
             </div>
           </div>

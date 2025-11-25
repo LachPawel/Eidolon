@@ -19,16 +19,22 @@ export const DotBackground = () => {
     if (!ctx) return;
     let animationFrameId: number;
 
+    const handleResize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
     const render = () => {
       if (!canvas) return;
-      const { width, height } = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-
-      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.scale(dpr, dpr);
-      }
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -65,7 +71,10 @@ export const DotBackground = () => {
       animationFrameId = requestAnimationFrame(render);
     };
     render();
-    return () => cancelAnimationFrame(animationFrameId);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
   }, []);
 
   return (
