@@ -8,7 +8,7 @@ cmds = ["npm install -g pnpm", "pnpm install --frozen-lockfile"]
 cmds = ["pnpm run build"]
 
 [start]
-cmd = "npx drizzle-kit push && npx tsx src/seeds/seed.ts && node dist/index.js"
+cmd = "npx drizzle-kit push && node dist/index.js"
 
 [variables]
 NPM_CONFIG_PRODUCTION = "false"
