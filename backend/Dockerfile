@@ -34,7 +34,7 @@ RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/dist ./dist
 
 # Copy drizzle config and schema for migrations
-COPY --from=builder /app/drizzle.config.ts ./
+COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/src/db ./src/db
 
 # Copy seed files (source needed for tsx)

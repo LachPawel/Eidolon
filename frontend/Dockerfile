@@ -38,4 +38,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Serve the static files (-s for SPA mode, -l for port)
-CMD ["sh", "-c", "serve -s dist -l $PORT"]
+CMD ["sh", "-c", "npx serve -s dist -l $PORT"]
