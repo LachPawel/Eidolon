@@ -134,8 +134,8 @@ export const articlesRouter = router({
   create: publicProcedure
     .input(
       z.object({
-        name: z.string(),
-        organization: z.string(),
+        name: z.string().min(1, "Name is required"),
+        organization: z.string().min(1, "Organization is required"),
         status: z.enum(["draft", "active", "archived"]),
         attributeFields: z.array(fieldSchema).optional(),
         shopFloorFields: z.array(fieldSchema).optional(),
@@ -289,5 +289,65 @@ export const articlesRouter = router({
   delete: publicProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     await db.delete(articles).where(eq(articles.id, input.id));
     return { success: true };
+  }),
+
+  getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const article = await db.query.articles.findFirst({
+      where: eq(articles.id, input.id),
+      with: {
+        fieldDefinitions: {
+          with: {
+            validation: true,
+          },
+        },
+      },
+    });
+
+    if (!article) {
+      return null;
+    }
+
+    return {
+      id: article.id,
+      name: article.name,
+      organization: article.organization,
+      status: article.status,
+      attributeFields: article.fieldDefinitions
+        .filter((fd) => fd.scope === "attribute")
+        .map((fd) => ({
+          id: fd.id,
+          fieldKey: fd.fieldKey,
+          fieldLabel: fd.fieldLabel,
+          fieldType: fd.fieldType,
+          scope: "attribute" as const,
+          validation: fd.validation
+            ? {
+                required: fd.validation.required ?? false,
+                min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                max: fd.validation.max ? Number(fd.validation.max) : undefined,
+                options: fd.validation.options ?? undefined,
+              }
+            : undefined,
+        })),
+      shopFloorFields: article.fieldDefinitions
+        .filter((fd) => fd.scope === "shop_floor")
+        .map((fd) => ({
+          id: fd.id,
+          fieldKey: fd.fieldKey,
+          fieldLabel: fd.fieldLabel,
+          fieldType: fd.fieldType,
+          scope: "shop_floor" as const,
+          validation: fd.validation
+            ? {
+                required: fd.validation.required ?? false,
+                min: fd.validation.min ? Number(fd.validation.min) : undefined,
+                max: fd.validation.max ? Number(fd.validation.max) : undefined,
+                options: fd.validation.options ?? undefined,
+              }
+            : undefined,
+        })),
+      createdAt: article.createdAt,
+      updatedAt: article.updatedAt,
+    };
   }),
 });
