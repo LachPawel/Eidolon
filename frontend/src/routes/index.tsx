@@ -16,8 +16,6 @@ import {
   Database,
   Factory,
   ChevronRight,
-  Menu,
-  X,
   Sparkles,
   ScrollText,
   Smartphone,
@@ -425,17 +423,9 @@ const InteractiveDemo = () => {
 // --- Landing Page ---
 
 function EidolonLanding() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [titleNumber, setTitleNumber] = useState(0);
 
   const titles = useMemo(() => ["Precise", "Dynamic", "Intelligent", "Scalable", "Connected"], []);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -452,62 +442,6 @@ function EidolonLanding() {
     <div className="min-h-screen font-sans text-zinc-900 selection:bg-zinc-900 selection:text-white relative">
       {/* 2D Canvas Background */}
       <DotBackground />
-
-      {/* Navigation */}
-      <nav
-        className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-md border-b border-zinc-200 py-4" : "bg-transparent py-6"}`}
-      >
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <Layers className="text-white w-5 h-5" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">eidolon</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-600">
-            <a href="#features" className="hover:text-black transition-colors">
-              Features
-            </a>
-            <a href="#how-it-works" className="hover:text-black transition-colors">
-              How it Works
-            </a>
-            <a href="#pricing" className="hover:text-black transition-colors">
-              Pricing
-            </a>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4">
-            <a href="#" className="text-sm font-medium hover:text-black transition-colors">
-              Log in
-            </a>
-            <Button size="sm">Get Started</Button>
-          </div>
-
-          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X /> : <Menu />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-white border-b border-zinc-200 p-6 md:hidden flex flex-col gap-4 shadow-xl">
-            <a href="#features" className="text-lg font-medium">
-              Features
-            </a>
-            <a href="#how-it-works" className="text-lg font-medium">
-              How it Works
-            </a>
-            <hr className="border-zinc-100" />
-            <div className="flex flex-col gap-3">
-              <Button variant="secondary" className="w-full justify-center">
-                Log in
-              </Button>
-              <Button className="w-full justify-center">Get Started</Button>
-            </div>
-          </div>
-        )}
-      </nav>
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 md:pt-48 md:pb-32 px-6 relative z-10">

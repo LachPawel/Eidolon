@@ -1,6 +1,6 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { Hexagon } from "lucide-react";
+import { Layers } from "lucide-react";
 
 export const Route = createRootRoute({
   component: () => (
@@ -14,7 +14,7 @@ export const Route = createRootRoute({
                 className="flex items-center gap-2 font-bold text-xl tracking-tight text-zinc-900"
               >
                 <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
-                  <Hexagon size={18} strokeWidth={3} />
+                  <Layers size={18} strokeWidth={3} />
                 </div>
                 Eidolon
               </Link>
@@ -32,9 +32,6 @@ export const Route = createRootRoute({
                   Shop Floor
                 </Link>
               </nav>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200" />
             </div>
           </div>
         </header>
