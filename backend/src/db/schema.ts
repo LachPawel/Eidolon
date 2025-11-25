@@ -1,26 +1,48 @@
-import { pgTable, serial, text, timestamp, integer, boolean, decimal } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  decimal,
+  index,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const articles = pgTable("articles", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  organization: text("organization").notNull(),
-  status: text("status").notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const articles = pgTable(
+  "articles",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    organization: text("organization").notNull(),
+    status: text("status").notNull().default("draft"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("articles_name_idx").on(table.name),
+    index("articles_organization_idx").on(table.organization),
+    index("articles_status_idx").on(table.status),
+    index("articles_created_at_idx").on(table.createdAt),
+  ]
+);
 
-export const fieldDefinitions = pgTable("field_definitions", {
-  id: serial("id").primaryKey(),
-  articleId: integer("article_id")
-    .notNull()
-    .references(() => articles.id, { onDelete: "cascade" }),
-  fieldKey: text("field_key").notNull(),
-  fieldLabel: text("field_label").notNull(),
-  fieldType: text("field_type").notNull(), // 'text' | 'number' | 'boolean' | 'select'
-  scope: text("scope").notNull(), // 'attribute' | 'shop_floor'
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const fieldDefinitions = pgTable(
+  "field_definitions",
+  {
+    id: serial("id").primaryKey(),
+    articleId: integer("article_id")
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    fieldKey: text("field_key").notNull(),
+    fieldLabel: text("field_label").notNull(),
+    fieldType: text("field_type").notNull(), // 'text' | 'number' | 'boolean' | 'select'
+    scope: text("scope").notNull(), // 'attribute' | 'shop_floor'
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("field_definitions_article_id_idx").on(table.articleId)]
+);
 
 export const fieldValidations = pgTable("field_validations", {
   id: serial("id").primaryKey(),
@@ -33,27 +55,38 @@ export const fieldValidations = pgTable("field_validations", {
   options: text("options").array(),
 });
 
-export const entries = pgTable("entries", {
-  id: serial("id").primaryKey(),
-  articleId: integer("article_id")
-    .notNull()
-    .references(() => articles.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const entries = pgTable(
+  "entries",
+  {
+    id: serial("id").primaryKey(),
+    articleId: integer("article_id")
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("entries_article_id_idx").on(table.articleId)]
+);
 
-export const entryValues = pgTable("entry_values", {
-  id: serial("id").primaryKey(),
-  entryId: integer("entry_id")
-    .notNull()
-    .references(() => entries.id, { onDelete: "cascade" }),
-  fieldDefinitionId: integer("field_definition_id")
-    .notNull()
-    .references(() => fieldDefinitions.id, { onDelete: "cascade" }),
-  valueText: text("value_text"),
-  valueNumber: decimal("value_number"),
-  valueBoolean: boolean("value_boolean"),
-});
+export const entryValues = pgTable(
+  "entry_values",
+  {
+    id: serial("id").primaryKey(),
+    entryId: integer("entry_id")
+      .notNull()
+      .references(() => entries.id, { onDelete: "cascade" }),
+    fieldDefinitionId: integer("field_definition_id")
+      .notNull()
+      .references(() => fieldDefinitions.id, { onDelete: "cascade" }),
+    valueText: text("value_text"),
+    valueNumber: decimal("value_number"),
+    valueBoolean: boolean("value_boolean"),
+  },
+  (table) => [
+    index("entry_values_entry_id_idx").on(table.entryId),
+    index("entry_values_field_definition_id_idx").on(table.fieldDefinitionId),
+  ]
+);
 
 // Relations
 export const articlesRelations = relations(articles, ({ many }) => ({

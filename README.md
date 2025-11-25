@@ -61,9 +61,15 @@ This repo will be divided into various branches, each representing a different c
     - Enhance user experience with animations and transitions.
     - Enable editing of article entries directly from the frontend.
 
+- Chapter 8: The Performance - Implementing Advanced Search with Algolia and Pinecone
+    - Integrate Algolia for fast text-based search.
+    - Implement Pinecone for semantic search capabilities.
+    - Compare performance between PostgreSQL, Algolia, and Pinecone.
+    - Provide AI-powered field suggestions based on similar articles.
+
 ### Tech Stack (Work in Progress)
 
-- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC
+- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC, OpenAI, Algolia, Pinecone
 - Frontend: Vite, React, TypeScript, tRPC, Tailwind CSS, ESLint, Prettier
 
 ### Requirements (Tested on macOS)

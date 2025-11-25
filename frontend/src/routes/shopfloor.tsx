@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import type { Article, Field } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Factory, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { AIInputHint } from "@/components/AIInputHint";
 
 export const Route = createFileRoute("/shopfloor")({
   component: ShopFloor,
@@ -208,36 +209,57 @@ function EntryForm({ article }: { article: Article }) {
             </label>
 
             {field.fieldType === "text" && (
-              <input
-                type="text"
-                value={String(formValues[field.fieldKey] || "")}
-                onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 transition-all"
-                placeholder={`Enter ${field.fieldLabel.toLowerCase()}...`}
-                required={field.validation?.required}
-              />
+              <>
+                <input
+                  type="text"
+                  value={String(formValues[field.fieldKey] || "")}
+                  onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 transition-all"
+                  placeholder={`Enter ${field.fieldLabel.toLowerCase()}...`}
+                  required={field.validation?.required}
+                />
+                <AIInputHint
+                  articleName={article.name}
+                  organization={article.organization}
+                  fieldKey={field.fieldKey}
+                  fieldLabel={field.fieldLabel}
+                  fieldType={field.fieldType}
+                  currentValue={formValues[field.fieldKey] as string}
+                />
+              </>
             )}
 
             {field.fieldType === "number" && (
-              <input
-                type="number"
-                value={
-                  typeof formValues[field.fieldKey] === "number"
-                    ? String(formValues[field.fieldKey])
-                    : ""
-                }
-                onChange={(e) =>
-                  handleFieldChange(
-                    field.fieldKey,
-                    e.target.value === "" ? "" : Number(e.target.value)
-                  )
-                }
-                className="w-full px-4 py-3 bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 transition-all"
-                placeholder="0"
-                required={field.validation?.required}
-                min={field.validation?.min}
-                max={field.validation?.max}
-              />
+              <>
+                <input
+                  type="number"
+                  value={
+                    typeof formValues[field.fieldKey] === "number"
+                      ? String(formValues[field.fieldKey])
+                      : ""
+                  }
+                  onChange={(e) =>
+                    handleFieldChange(
+                      field.fieldKey,
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                  className="w-full px-4 py-3 bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 transition-all"
+                  placeholder="0"
+                  required={field.validation?.required}
+                  min={field.validation?.min}
+                  max={field.validation?.max}
+                />
+                {/* AI Input Hint for number fields */}
+                <AIInputHint
+                  articleName={article.name}
+                  organization={article.organization}
+                  fieldKey={field.fieldKey}
+                  fieldLabel={field.fieldLabel}
+                  fieldType={field.fieldType}
+                  currentValue={formValues[field.fieldKey] as number}
+                />
+              </>
             )}
 
             {field.fieldType === "boolean" && (
