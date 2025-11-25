@@ -11,7 +11,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://eidolon.up.railway.app"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use(
