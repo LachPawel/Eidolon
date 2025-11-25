@@ -1,19 +1,7 @@
-import { Pinecone, Index as PineconeIndex } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
 
 // Lazy-initialized clients
-let pineconeClient: Pinecone | null = null;
 let openaiClient: OpenAI | null = null;
-let indexInstance: PineconeIndex | null = null;
-
-function getPinecone(): Pinecone | null {
-  if (!pineconeClient && process.env.PINECONE_API_KEY) {
-    pineconeClient = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY,
-    });
-  }
-  return pineconeClient;
-}
 
 function getOpenAI(): OpenAI | null {
   if (!openaiClient && process.env.OPENAI_API_KEY) {
@@ -24,65 +12,15 @@ function getOpenAI(): OpenAI | null {
   return openaiClient;
 }
 
-// Pinecone index name
-const INDEX_NAME = "eidolon-articles";
-
-function getIndex(): PineconeIndex | null {
-  if (!indexInstance) {
-    const pc = getPinecone();
-    if (pc) {
-      const indexName = process.env.PINECONE_INDEX_NAME || INDEX_NAME;
-      indexInstance = pc.index(indexName);
-    }
-  }
-  return indexInstance;
-}
-
-export interface ArticleVectorMetadata {
-  name: string;
-  organization: string;
-  industry: string;
-  fieldKeys: string[];
-  fieldLabels: string[];
-  fieldTypes: string[];
-}
-
-export interface SimilarArticleMatch {
-  id: string;
-  score: number;
-  metadata: ArticleVectorMetadata;
-}
-
-export interface FieldSuggestion {
-  fieldKey: string;
-  fieldLabel: string;
-  fieldType: string;
-  reason: string;
-  confidence: number;
-}
-
 /**
- * Detects industry based on article name and organization
+ * Set the OpenAI client for testing purposes
  */
-function detectIndustry(name: string, org: string): string {
-  const text = `${name} ${org}`.toLowerCase();
-  if (text.includes("plastic") || text.includes("polymer") || text.includes("injection")) {
-    return "plastic-textile";
-  }
-  if (text.includes("metal") || text.includes("steel") || text.includes("aluminum")) {
-    return "metal-automotive";
-  }
-  if (text.includes("pharma") || text.includes("medical") || text.includes("tablet")) {
-    return "pharmaceutical";
-  }
-  if (text.includes("chem") || text.includes("catalyst") || text.includes("reactor")) {
-    return "chemistry-process";
-  }
-  return "general";
+export function setOpenAIClientForTest(client: OpenAI | null) {
+  openaiClient = client;
 }
 
 /**
- * Generate embeddings using OpenAI
+ * Generate an embedding for a given text using OpenAI
  */
 async function generateEmbedding(text: string): Promise<number[]> {
   const openai = getOpenAI();

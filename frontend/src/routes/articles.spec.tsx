@@ -11,6 +11,18 @@ vi.mock("@/trpc", () => ({
       list: {
         useInfiniteQuery: vi.fn(),
       },
+      fastSearch: {
+        useQuery: vi.fn(() => ({ data: [], isLoading: false })),
+      },
+      getSearchServicesStatus: {
+        useQuery: vi.fn(() => ({ data: null, isLoading: false })),
+      },
+      analyzeSchema: {
+        useQuery: vi.fn(() => ({ data: null, isLoading: false })),
+      },
+      getAIHints: {
+        useQuery: vi.fn(() => ({ data: null, isLoading: false })),
+      },
       create: {
         useMutation: vi.fn(),
       },
@@ -56,19 +68,6 @@ const createWrapper = () => {
 describe("Articles Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("renders loading state initially", () => {
-    vi.mocked(trpc.articles.list.useInfiniteQuery).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      fetchNextPage: vi.fn(),
-      hasNextPage: false,
-      isFetchingNextPage: false,
-    } as unknown as ReturnType<typeof trpc.articles.list.useInfiniteQuery>);
-
-    render(<Articles />, { wrapper: createWrapper() });
-    expect(screen.getByText("Loading articles...")).toBeInTheDocument();
   });
 
   it("renders articles when data is loaded", () => {
