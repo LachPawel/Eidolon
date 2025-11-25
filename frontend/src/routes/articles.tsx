@@ -29,7 +29,7 @@ export function Articles() {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [useAlgolia, setUseAlgolia] = useState(true); // Default to fast Algolia search
+  const [useAlgolia, setUseAlgolia] = useState(false); // Default to PostgreSQL search
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
