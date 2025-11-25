@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install -g pnpm", "pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["pnpm run build"]
+
+[start]
+cmd = "npx drizzle-kit push && npx tsx src/seeds/seed.ts && node dist/index.js"
+
+[variables]
+NPM_CONFIG_PRODUCTION = "false"
+NODE_ENV = "production"
