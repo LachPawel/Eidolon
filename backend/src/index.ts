@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { articlesRouter, entriesRouter } from "./routes/index.js";
 import { appRouter } from "./routers/index.js";
@@ -9,6 +10,7 @@ import { createContext } from "./trpc.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
