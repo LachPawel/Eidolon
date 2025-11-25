@@ -56,6 +56,11 @@ This repo will be divided into various branches, each representing a different c
     - Implement forms for adding and editing articles.
     - Connect the frontend to the backend API with tRPC.
 
+- Chapter 7: The Book Cover - Improving UI/UX with Tailwind CSS and 21st.dev
+    - Design a responsive and user-friendly interface.
+    - Enhance user experience with animations and transitions.
+    - Enable editing of article entries directly from the frontend.
+
 ### Tech Stack (Work in Progress)
 
 - Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC
