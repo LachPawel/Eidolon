@@ -67,6 +67,10 @@ This repo will be divided into various branches, each representing a different c
     - Compare performance between PostgreSQL, Algolia, and Pinecone.
     - Provide AI-powered field suggestions based on similar articles.
 
+- Chapter 9: The Migration - Database Migrations with Drizzle Kit
+    - Create migration scripts for schema changes.
+    - Implement a versioning system for the database schema.
+
 ### Tech Stack (Work in Progress)
 
 - Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC, OpenAI, Algolia, Pinecone
