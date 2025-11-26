@@ -17,3 +17,17 @@ export type CreatedEntry = RouterOutput["entries"]["create"];
 export type Field = NonNullable<Article["shopFloorFields"]>[number];
 export type FieldType = Field["fieldType"];
 export type ArticleStatus = Article["status"];
+
+export type FieldInput = {
+  id?: number;
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType: "text" | "number" | "boolean" | "select";
+  scope: "attribute" | "shop_floor";
+  validation?: {
+    required?: boolean;
+    min?: number;
+    max?: number;
+    options?: string[];
+  };
+};
