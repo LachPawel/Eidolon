@@ -71,6 +71,11 @@ This repo will be divided into various branches, each representing a different c
     - Create migration scripts for schema changes.
     - Implement a versioning system for the database schema.
 
+- Chapter 10: The Storybook - Documenting Components with Storybook
+    - Set up Storybook for the frontend project.
+    - Create stories for all major components.
+    - Use Storybook as a development environment for UI components.
+
 ### Tech Stack (Work in Progress)
 
 - Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC, OpenAI, Algolia, Pinecone

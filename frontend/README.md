@@ -30,6 +30,9 @@ pnpm build
 
 # Run unit tests
 pnpm test
+
+# Run Storybook
+pnpm storybook
 ```
 
 ## Project Structure
