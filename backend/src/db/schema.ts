@@ -63,6 +63,10 @@ export const entries = pgTable(
       .notNull()
       .references(() => articles.id, { onDelete: "cascade" }),
     quantity: integer("quantity").notNull().default(1),
+    status: text("status").notNull().default("PREPARATION"),
+    priority: integer("priority").default(0),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

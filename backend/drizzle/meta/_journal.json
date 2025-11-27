@@ -15,6 +15,13 @@
       "when": 1764173287704,
       "tag": "0001_add_quantity_to_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764233783358,
+      "tag": "0002_production_planning",
+      "breakpoints": true
     }
   ]
 }
