@@ -8,7 +8,10 @@ export const Route = createFileRoute("/production")({
 });
 
 function ProductionPage() {
-  const { data: stats } = trpc.entries.getStats.useQuery();
+  const { data: stats } = trpc.entries.getStats.useQuery(undefined, {
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <div className="min-h-screen font-sans text-zinc-900 bg-white">
@@ -23,7 +26,7 @@ function ProductionPage() {
 
         {/* Stats Overview (Minimalist) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="p-6 border border-zinc-200 rounded-none bg-white">
+          <div className="p-6 border border-zinc-200 rounded-xl bg-white shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Active Jobs
@@ -33,7 +36,7 @@ function ProductionPage() {
             <div className="text-3xl font-light text-zinc-900">{stats?.activeJobs ?? "-"}</div>
             <div className="text-xs text-zinc-400 mt-2 font-mono">Real-time</div>
           </div>
-          <div className="p-6 border border-zinc-200 rounded-none bg-white">
+          <div className="p-6 border border-zinc-200 rounded-xl bg-white shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Efficiency
@@ -45,7 +48,7 @@ function ProductionPage() {
               <TrendingUp size={10} /> Based on completion
             </div>
           </div>
-          <div className="p-6 border border-zinc-200 rounded-none bg-white">
+          <div className="p-6 border border-zinc-200 rounded-xl bg-white shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Bottlenecks
@@ -57,7 +60,7 @@ function ProductionPage() {
             </div>
             <div className="text-xs text-zinc-400 mt-2 font-mono">Most items</div>
           </div>
-          <div className="p-6 border border-zinc-200 rounded-none bg-white">
+          <div className="p-6 border border-zinc-200 rounded-xl bg-white shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Completed

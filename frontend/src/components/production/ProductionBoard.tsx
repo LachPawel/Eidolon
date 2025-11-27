@@ -70,7 +70,13 @@ export function ProductionBoard() {
     originalQuantity: 0,
   });
 
-  const { data: entries, refetch } = trpc.entries.list.useQuery({});
+  const { data: entries, refetch } = trpc.entries.list.useQuery(
+    {},
+    {
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    }
+  );
   const updateEntry = trpc.entries.update.useMutation({ onSuccess: () => refetch() });
   const optimizeSchedule = trpc.ai.optimizeSchedule.useMutation({ onSuccess: () => refetch() });
 
@@ -78,7 +84,7 @@ export function ProductionBoard() {
     optimizeSchedule.mutate();
   };
 
-  const [prevEntries, setPrevEntries] = useState(entries);
+  const [prevEntries, setPrevEntries] = useState<typeof entries | undefined>(undefined);
 
   // Initialize visual entries from data (Sync during render to avoid effect cascade)
   if (entries !== prevEntries) {
@@ -499,11 +505,11 @@ export function ProductionBoard() {
   return (
     <div className="relative w-full h-full">
       {/* AI Optimize Button */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-1 right-4 z-10">
         <button
           onClick={handleOptimize}
           disabled={optimizeSchedule.isPending}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-none shadow-sm hover:bg-zinc-800 transition-all font-medium text-xs uppercase tracking-wider border border-zinc-900"
+          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-xl shadow-sm hover:bg-zinc-800 transition-all font-medium text-xs uppercase tracking-wider border border-zinc-900"
         >
           {optimizeSchedule.isPending ? (
             <>
