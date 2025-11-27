@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { InteractiveDemo } from "@/components/landing/InteractiveDemo";
 import { FeaturesSectionWithHoverEffects } from "@/components/landing/FeaturesSection";
 import { ShopFloorCards } from "@/components/landing/ShopFloorCards";
+import { ProductionVisual } from "@/components/landing/ProductionVisual";
 import { Layers, MoveRight, PhoneCall } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -150,6 +151,47 @@ function EidolonLanding() {
               >
                 <Link to="/shopfloor">Explore Shop Floor App</Link>
               </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Production Section */}
+      <section className="py-24 border-t border-zinc-200 bg-white/80 backdrop-blur-sm relative z-10">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center gap-16">
+            <div className="w-full md:w-1/2">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Intelligent Production Planning
+              </h2>
+              <p className="text-lg text-zinc-500 mb-8 leading-relaxed">
+                Stop guessing with spreadsheets. Zentio AI analyzes your capacity, deadlines, and
+                constraints to generate the optimal production schedule.
+              </p>
+              <ul className="space-y-4 mb-8">
+                {[
+                  "AI-driven schedule optimization",
+                  "Real-time capacity analysis",
+                  "Drag-and-drop Gantt charts",
+                  "Predictive bottleneck detection",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-zinc-700">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Button
+                variant="outline"
+                className="!text-black !border-zinc-300 hover:!bg-zinc-50 hover:!border-zinc-400"
+                asChild
+              >
+                <Link to="/production">View Production Board</Link>
+              </Button>
+            </div>
+
+            <div className="w-full md:w-1/2 flex justify-center">
+              <ProductionVisual />
             </div>
           </div>
         </div>
