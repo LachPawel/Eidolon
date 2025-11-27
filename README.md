@@ -76,10 +76,14 @@ This repo will be divided into various branches, each representing a different c
     - Create stories for all major components.
     - Use Storybook as a development environment for UI components.
 
+- Chapter 11: The Production Page - Dashboard for Monitoring and Scheduling
+    - Build a dashboard to monitor article production.
+    - Implement scheduling features for article entries.
+
 ### Tech Stack (Work in Progress)
 
-- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Chai/Mocha and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC, OpenAI, Algolia, Pinecone
-- Frontend: Vite, React, TypeScript, tRPC, Tailwind CSS, ESLint, Prettier
+- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Vitest and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC, OpenAI, Algolia, Pinecone
+- Frontend: Vite, React, TypeScript, tRPC, Tailwind CSS, ESLint, Prettier, Husky, Storybook
 
 ### Requirements (Tested on macOS)
 
