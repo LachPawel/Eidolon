@@ -175,14 +175,3 @@ This repo is divided into various branches, each representing a different chapte
 ## Contributing
 
 Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to follow the coding standards and include tests for any new features or bug fixes.
-
-### Testing
-
-1. Create a `.env.test` file in the `backend` directory based on `.env.example` with test database credentials
-2. Set up the test database: `pnpm run test:db:reset`
-3. Seed the test database: `pnpm run test:db:seed`
-4. Run tests:
-   - All tests: `pnpm test`
-   - Unit tests only: `pnpm run test:unit`
-   - Integration tests only: `pnpm run test:integration`
-5. Clean up test database: `pnpm run test:db:clean`
