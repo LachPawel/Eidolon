@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createTestApp } from "../app.js";
 import { cleanDatabase } from "../setup.js";
@@ -50,8 +50,8 @@ describe("Entries API", () => {
 
       const res = await request(app).post(`/api/entries/${articleId}`).send(entryData).expect(201);
 
-      expect(res.body).to.have.property("id");
-      expect(res.body.articleId).to.equal(Number(articleId));
+      expect(res.body).toHaveProperty("id");
+      expect(res.body.articleId).toBe(Number(articleId));
     });
 
     it("should reject entry with missing required field", async () => {
@@ -62,8 +62,8 @@ describe("Entries API", () => {
         })
         .expect(400);
 
-      expect(res.body.error).to.equal("Validation Failed");
-      expect(res.body.details).to.be.an("array");
+      expect(res.body.error).toBe("Validation Failed");
+      expect(Array.isArray(res.body.details)).toBe(true);
     });
 
     it("should reject entry with out-of-range number", async () => {
@@ -74,7 +74,7 @@ describe("Entries API", () => {
         })
         .expect(400);
 
-      expect(res.body.details).to.include.members(["Field 'Weight (kg)' must be at most 100."]);
+      expect(res.body.details).toContain("Field 'Weight (kg)' must be at most 100.");
     });
 
     it("should reject entry with invalid select option", async () => {
@@ -85,9 +85,7 @@ describe("Entries API", () => {
         })
         .expect(400);
 
-      expect(res.body.details).to.include.members([
-        "Field 'Quality Check' has an invalid selection.",
-      ]);
+      expect(res.body.details).toContain("Field 'Quality Check' has an invalid selection.");
     });
 
     it("should return 404 for non-existent article", async () => {
@@ -98,7 +96,7 @@ describe("Entries API", () => {
         })
         .expect(404);
 
-      expect(res.body.error).to.equal("Article not found");
+      expect(res.body.error).toBe("Article not found");
     });
   });
 });

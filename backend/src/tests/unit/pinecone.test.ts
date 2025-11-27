@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { validateValueWithAI, setOpenAIClientForTest } from "../../services/pinecone.js";
 
 describe("Pinecone Service (AI Validation)", () => {
@@ -58,13 +58,13 @@ describe("Pinecone Service (AI Validation)", () => {
     },
   };
 
-  before(() => {
+  beforeAll(() => {
     // Inject mock client
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setOpenAIClientForTest(mockOpenAI as any);
   });
 
-  after(() => {
+  afterAll(() => {
     // Reset client
     setOpenAIClientForTest(null);
   });

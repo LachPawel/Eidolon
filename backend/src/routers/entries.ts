@@ -11,24 +11,33 @@ export const entriesRouter = router({
   list: publicProcedure
     .input(
       z.object({
-        articleId: z.number(),
+        articleId: z.number().optional(),
       })
     )
     .query(async ({ input }) => {
+      const whereClause = input.articleId ? eq(entries.articleId, input.articleId) : undefined;
+
       const allEntries = await db.query.entries.findMany({
-        where: eq(entries.articleId, input.articleId),
+        where: whereClause,
         with: {
           values: {
             with: {
               fieldDefinition: true,
             },
           },
+          article: true,
         },
       });
 
       return allEntries.map((entry) => ({
         id: entry.id,
         articleId: entry.articleId,
+        articleName: entry.article.name,
+        quantity: entry.quantity,
+        status: entry.status,
+        priority: entry.priority,
+        startedAt: entry.startedAt,
+        completedAt: entry.completedAt,
         values: entry.values.reduce(
           (acc, val) => {
             const key = val.fieldDefinition.fieldKey;
@@ -50,10 +59,69 @@ export const entriesRouter = router({
       }));
     }),
 
+  getStats: publicProcedure.query(async () => {
+    const allEntries = await db.query.entries.findMany();
+
+    const activeJobs = allEntries.filter((e) => e.status === "IN PRODUCTION").length;
+    const completedJobs = allEntries.filter((e) => e.status === "READY").length;
+
+    const counts = allEntries.reduce(
+      (acc, curr) => {
+        acc[curr.status] = (acc[curr.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const stages = ["PREPARATION", "IN PRODUCTION"];
+    let bottleneckStage = "None";
+    let bottleneckCount = 0;
+
+    for (const stage of stages) {
+      if ((counts[stage] || 0) > bottleneckCount) {
+        bottleneckCount = counts[stage] || 0;
+        bottleneckStage = stage;
+      }
+    }
+
+    const total = allEntries.length;
+    const efficiency = total > 0 ? Math.round((completedJobs / total) * 100) : 0;
+
+    return {
+      activeJobs,
+      completedJobs,
+      bottleneckStage,
+      efficiency,
+    };
+  }),
+
+  update: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        quantity: z.number().optional(),
+        status: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const [updatedEntry] = await db
+        .update(entries)
+        .set({
+          ...(input.quantity !== undefined ? { quantity: input.quantity } : {}),
+          ...(input.status !== undefined ? { status: input.status } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(entries.id, input.id))
+        .returning();
+
+      return updatedEntry;
+    }),
+
   create: publicProcedure
     .input(
       z.object({
         articleId: z.number(),
+        quantity: z.number().optional().default(1),
         values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
       })
     )
@@ -106,6 +174,8 @@ export const entriesRouter = router({
           .insert(entries)
           .values({
             articleId: input.articleId,
+            quantity: input.quantity,
+            status: "PREPARATION",
           })
           .returning();
 

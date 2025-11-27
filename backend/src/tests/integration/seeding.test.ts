@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, it, expect, beforeEach } from "vitest";
 import { db } from "../../db/index.js";
 import { articles, fieldDefinitions, fieldValidations } from "../../db/schema.js";
 import { generateArticles } from "../../seeds/generator.js";
@@ -78,15 +78,15 @@ describe("Seeding Integration", () => {
 
       // Verify articles were inserted
       const allArticles = await db.select().from(articles);
-      expect(allArticles).to.have.lengthOf(10);
+      expect(allArticles).toHaveLength(10);
 
       // Verify field definitions were created
       const allFieldDefs = await db.select().from(fieldDefinitions);
-      expect(allFieldDefs.length).to.be.greaterThan(20); // At least 2 fields per article
+      expect(allFieldDefs.length).toBeGreaterThan(20); // At least 2 fields per article
 
       // Verify field validations were created
       const allValidations = await db.select().from(fieldValidations);
-      expect(allValidations.length).to.be.greaterThan(0);
+      expect(allValidations.length).toBeGreaterThan(0);
     });
 
     it("should query articles with field definitions using joins", async () => {
@@ -139,13 +139,13 @@ describe("Seeding Integration", () => {
         },
       });
 
-      expect(result).to.have.lengthOf(1);
-      expect(result[0].fieldDefinitions.length).to.equal(article.shopFloorFields.length);
+      expect(result).toHaveLength(1);
+      expect(result[0].fieldDefinitions.length).toBe(article.shopFloorFields.length);
 
       // Verify field definitions have correct scope
       result[0].fieldDefinitions.forEach((fd) => {
-        expect(fd.scope).to.equal("shop_floor");
-        expect(fd.validation).to.exist;
+        expect(fd.scope).toBe("shop_floor");
+        expect(fd.validation).toBeDefined();
       });
     });
 
@@ -177,8 +177,8 @@ describe("Seeding Integration", () => {
         .where(eq(articles.status, "archived"));
 
       // Active should be the most common
-      expect(Number(activeCount[0].count)).to.be.greaterThan(Number(draftCount[0].count));
-      expect(Number(activeCount[0].count)).to.be.greaterThan(Number(archivedCount[0].count));
+      expect(Number(activeCount[0].count)).toBeGreaterThan(Number(draftCount[0].count));
+      expect(Number(activeCount[0].count)).toBeGreaterThan(Number(archivedCount[0].count));
     });
 
     it("should maintain referential integrity", async () => {
@@ -226,7 +226,7 @@ describe("Seeding Integration", () => {
       // Each field definition should reference an existing article
       for (const fieldDef of allFieldDefs) {
         const articleExists = allArticles.some((a) => a.id === fieldDef.articleId);
-        expect(articleExists).to.be.true;
+        expect(articleExists).toBe(true);
       }
     });
   });
@@ -247,7 +247,7 @@ describe("Seeding Integration", () => {
       const organizations = new Set(allArticles.map((a) => a.organization));
 
       // Should have multiple organizations
-      expect(organizations.size).to.be.at.least(10);
+      expect(organizations.size).toBeGreaterThanOrEqual(10);
     });
 
     it("should create diverse field types", async () => {
@@ -280,8 +280,9 @@ describe("Seeding Integration", () => {
       const fieldTypes = new Set(allFieldDefs.map((f) => f.fieldType));
 
       // Should have multiple field types
-      expect(fieldTypes.size).to.be.at.least(3);
-      expect(fieldTypes).to.include.members(["text", "number"]);
+      expect(fieldTypes.size).toBeGreaterThanOrEqual(3);
+      expect(fieldTypes.has("text")).toBe(true);
+      expect(fieldTypes.has("number")).toBe(true);
     });
   });
 });

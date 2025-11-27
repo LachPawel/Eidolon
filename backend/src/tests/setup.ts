@@ -5,12 +5,12 @@ import { Pool } from "pg";
 import { sql } from "drizzle-orm";
 
 // Load .env.test before anything else
-dotenv.config({ path: ".env.test" });
+dotenv.config({ path: ".env.test", override: true });
 
 const connectionString = process.env.DATABASE_URL!;
 
 if (!connectionString) {
-  throw new Error("TEST_DATABASE_URL not found in .env.test");
+  throw new Error("TEST_DATABASE_URL or DATABASE_URL not found in .env.test");
 }
 
 const client = new Pool({

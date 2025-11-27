@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
 import { generateArticle, generateArticles } from "../../seeds/generator.js";
 import { industryTemplates } from "../../seeds/industryTemplates.js";
 

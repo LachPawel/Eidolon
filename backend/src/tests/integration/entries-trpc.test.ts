@@ -4,7 +4,7 @@
  * Tests for shop floor entry creation and management through TRPC
  */
 
-import { expect } from "chai";
+import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createTestApp } from "../app.js";
 import { cleanDatabase } from "../setup.js";
@@ -55,8 +55,8 @@ describe("TRPC Entries Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result).to.be.an("array");
-      expect(result.length).to.equal(0);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBe(0);
     });
 
     it("should return entries for an article via TRPC", async () => {
@@ -89,9 +89,9 @@ describe("TRPC Entries Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result).to.have.lengthOf(2);
-      expect(result[0].values).to.have.property("weight");
-      expect(result[0].values).to.have.property("color");
+      expect(result).toHaveLength(2);
+      expect(result[0].values).toHaveProperty("weight");
+      expect(result[0].values).toHaveProperty("color");
     });
 
     it("should filter entries by article ID", async () => {
@@ -137,8 +137,8 @@ describe("TRPC Entries Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result).to.have.lengthOf(1);
-      expect(result[0].articleId).to.equal(testArticleId);
+      expect(result).toHaveLength(1);
+      expect(result[0].articleId).toBe(testArticleId);
     });
   });
 
@@ -156,8 +156,8 @@ describe("TRPC Entries Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.id).to.exist;
-      expect(result.articleId).to.equal(testArticleId);
+      expect(result.id).toBeDefined();
+      expect(result.articleId).toBe(testArticleId);
     });
 
     it("should validate field values against schema via TRPC", async () => {
@@ -172,7 +172,7 @@ describe("TRPC Entries Router", () => {
         })
         .expect(400);
 
-      expect(res.body.error).to.exist;
+      expect(res.body.error).toBeDefined();
     });
 
     it("should handle missing required fields via TRPC", async () => {
@@ -187,7 +187,7 @@ describe("TRPC Entries Router", () => {
         })
         .expect(400);
 
-      expect(res.body.error).to.exist;
+      expect(res.body.error).toBeDefined();
     });
 
     it("should accept entries with only optional fields via TRPC", async () => {
@@ -203,7 +203,7 @@ describe("TRPC Entries Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.id).to.exist;
+      expect(result.id).toBeDefined();
     });
   });
 
@@ -239,7 +239,7 @@ describe("TRPC Entries Router", () => {
         })
         .expect(200);
 
-      expect(JSON.parse(createRes.text).result.data.id).to.exist;
+      expect(JSON.parse(createRes.text).result.data.id).toBeDefined();
 
       // 3. List entries via TRPC
       const listRes = await request(app)
@@ -247,8 +247,8 @@ describe("TRPC Entries Router", () => {
         .expect(200);
 
       const entries = JSON.parse(listRes.text).result.data;
-      expect(entries).to.have.lengthOf(1);
-      expect(entries[0].values.quantity).to.equal(100);
+      expect(entries).toHaveLength(1);
+      expect(entries[0].values.quantity).toBe(100);
     });
   });
 });
