@@ -15,7 +15,7 @@
 
 ---
 
-[![Storybook](https://raw.githubusercontent.com/storybookjs/brand/master/badge/badge-storybook.svg)](https://69285fb878dfda69d1a3ef3b-blncxymmov.chromatic.com/)
+[![Storybook](https://raw.githubusercontent.com/storybookjs/brand/master/badge/badge-storybook.svg)](https://69285fb878dfda69d1a3ef3b-raeykmmjhs.chromatic.com/)
 [![Frontend Tests](https://github.com/LachPawel/Eidolon/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/LachPawel/Eidolon/actions/workflows/frontend-tests.yml)
 [![Backend Tests](https://github.com/LachPawel/Eidolon/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/LachPawel/Eidolon/actions/workflows/backend-tests.yml)
 
