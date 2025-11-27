@@ -34,6 +34,7 @@ export default defineConfig({
       "src/components/articles/ArticleRow.spec.tsx",
       "src/components/shopfloor/ArticleList.spec.tsx",
       "src/components/shopfloor/EntryForm.spec.tsx",
+      "src/components/landing/ProductionVisual.spec.tsx",
       "src/components/production/ProductionBoard.spec.tsx",
     ],
   },
