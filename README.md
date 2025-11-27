@@ -1,22 +1,66 @@
-# Project Eidolon
+<div align="center">
+  <img src="frontend/public/layers.svg" alt="Eidolon Logo" width="120" height="120" />
+  <h1>Eidolon</h1>
+  <p>
+    <strong>A Next-Generation Manufacturing Execution System (MES)</strong>
+  </p>
+  <p>
+    <a href="https://eidolon-frontend.up.railway.app">View Demo</a>
+    ·
+    <a href="#features">Features</a>
+    ·
+    <a href="#architecture">Architecture</a>
+  </p>
+</div>
+
+---
 
 [![Storybook](https://raw.githubusercontent.com/storybookjs/brand/master/badge/badge-storybook.svg)](https://69285fb878dfda69d1a3ef3b-blncxymmov.chromatic.com/)
 [![Frontend Tests](https://github.com/LachPawel/Eidolon/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/LachPawel/Eidolon/actions/workflows/frontend-tests.yml)
 [![Backend Tests](https://github.com/LachPawel/Eidolon/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/LachPawel/Eidolon/actions/workflows/backend-tests.yml)
 
-### Overview
+## Overview
 
-The core idea is to create a platform for managing various articles across different industries. Companies should have the availability to define and configure their own articles as these can vary significantly between industries. 
+Eidolon is a comprehensive platform designed to bridge the gap between production planning and shop floor execution. It allows organizations to define complex, industry-specific articles with dynamic fields and manage their production lifecycle through an intuitive interface.
 
-This case includes defining additional fields specific to their needs, on all articles, individual, or groups of articles.
+By leveraging modern technologies like **AI-driven insights**, **vector search**, and **real-time updates**, Eidolon empowers manufacturers to optimize their workflows, identify bottlenecks, and ensure consistent quality across all production lines.
 
-On the other side, we have the shop floor where these articles are produced. Here, the focus is on providing a user-friendly interface for operators to efficiently manage and track the production of these articles.
+## Key Features
 
-### The Story
+-   **Dynamic Article Management**: Define articles with custom fields (text, number, boolean, select) tailored to specific industry needs.
+-   **Shop Floor Interface**: A streamlined, touch-friendly interface for operators to track production progress and update statuses in real-time.
+-   **AI Production Hints**: Integrated OpenAI analysis provides actionable insights and identifies potential bottlenecks based on current production states.
+-   **Advanced Search**: Powered by Algolia and Pinecone, enabling fast text-based and semantic search across large inventories.
+-   **Production Dashboard**: Visual overview of production schedules, performance metrics, and active jobs.
 
-This repo will be divided into various branches, each representing a different chapter of the story. Each chapter will introduce new features, challenges, and solutions as we progress through the development of the project. Starting from a very basic setup, we will gradually build up the complexity and functionality of the application. To include the tool only when needed, each chapter will be merged into the main branch upon completion. This way, the main branch will always represent the current state of the project, while the individual branches will serve as a record of our journey through the development process.
+## Architecture
 
-### Chapters (Work in Progress)
+Eidolon follows a modern, scalable architecture separating concerns between a responsive frontend and a robust backend API.
+
+### How It Works
+
+1.  **Definition**: Managers define **Articles** and their specific **Field Definitions** (attributes) in the system.
+2.  **Planning**: Production orders are created as **Entries**, scheduled for specific time slots.
+3.  **Execution**: Operators on the **Shop Floor** view their assigned tasks, update progress (Preparation -> In Production -> Ready), and input quality data.
+4.  **Optimization**: The system analyzes production data in real-time, offering **AI Hints** to improve efficiency and **Search** capabilities to quickly retrieve historical data.
+
+## Screenshots
+
+### Article Management
+
+### Production Dashboard
+
+### Shop Floor Interface
+
+## Tech Stack
+
+-   **Frontend**: React, Vite, TypeScript, Tailwind CSS, TanStack Router, Framer Motion, Storybook.
+-   **Backend**: Node.js, Express, tRPC, Drizzle ORM, PostgreSQL, OpenAI, Algolia, Pinecone.
+-   **DevOps**: Docker, Railway, GitHub Actions.
+
+## Development Journey (Chapters)
+
+This repo is divided into various branches, each representing a different chapter of the story. Each chapter introduces new features, challenges, and solutions.
 
 - Chapter 0: Setting up the Backend with Express
     - Initialize a basic Express server.
@@ -84,10 +128,10 @@ This repo will be divided into various branches, each representing a different c
     - Build a dashboard to monitor article production.
     - Implement scheduling features for article entries.
 
-### Tech Stack (Work in Progress)
-
-- Backend: Node.js with Express, TypeScript, Drizzle ORM, PostgreSQL, Docker, Vitest and Supertest for testing, Faker.js for data generation, ESLint, Prettier, Husky for code quality, tRPC, OpenAI, Algolia, Pinecone
-- Frontend: Vite, React, TypeScript, tRPC, Tailwind CSS, ESLint, Prettier, Husky, Storybook
+- Chapter 12: The Deployment - Deploying the Application
+    - Set up CI/CD pipelines for automated testing and deployment.
+    - Deploy the backend and frontend to a railway.app
+    - Chromatic integration for Storybook deployment.
 
 ### Requirements (Tested on macOS)
 
@@ -107,6 +151,21 @@ This repo will be divided into various branches, each representing a different c
    - Backend API: `http://localhost:3000`
    - Frontend: `http://localhost:5173`
 7. Clean the database: `pnpm run db:clean`
+
+### Testing
+
+1. Create a `.env.test` file in the `backend` directory based on `.env.example` with test database credentials
+2. Set up the test database: `pnpm run test:db:reset`
+3. Seed the test database: `pnpm run test:db:seed`
+4. Run tests:
+   - All tests: `pnpm test`
+   - Unit tests only: `pnpm run test:unit`
+   - Integration tests only: `pnpm run test:integration`
+5. Clean up test database: `pnpm run test:db:clean`
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to follow the coding standards and include tests for any new features or bug fixes.
 
 ### Testing
 
