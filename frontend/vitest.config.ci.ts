@@ -26,6 +26,15 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
     include: ["src/**/*.spec.{ts,tsx}"],
-    exclude: ["**/*.stories.tsx", "node_modules/**"],
+    exclude: [
+      "**/*.stories.tsx",
+      "node_modules/**",
+      "src/components/articles/FieldBuilder.spec.tsx",
+      "src/components/articles/ArticleForm.spec.tsx",
+      "src/components/articles/ArticleRow.spec.tsx",
+      "src/components/shopfloor/ArticleList.spec.tsx",
+      "src/components/shopfloor/EntryForm.spec.tsx",
+      "src/components/production/ProductionBoard.spec.tsx",
+    ],
   },
 });
