@@ -5,7 +5,7 @@
     <strong>A Next-Generation Manufacturing Execution System (MES)</strong>
   </p>
   <p>
-    <a href="https://eidolon-frontend.up.railway.app">View Demo</a>
+    <a href="https://https://eidolon.up.railway.app/">View Demo</a>
     ·
     <a href="#features">Features</a>
     ·
@@ -37,6 +37,8 @@ By leveraging modern technologies like **AI-driven insights**, **vector search**
 
 Eidolon follows a modern, scalable architecture separating concerns between a responsive frontend and a robust backend API.
 
+<img width="1000" height="587" alt="Screenshot 2025-11-25 at 12 43 45" src="https://github.com/user-attachments/assets/8be7783b-713b-4a0f-b705-f488565d5e69" />
+
 ### How It Works
 
 1.  **Definition**: Managers define **Articles** and their specific **Field Definitions** (attributes) in the system.
@@ -48,9 +50,16 @@ Eidolon follows a modern, scalable architecture separating concerns between a re
 
 ### Article Management
 
-### Production Dashboard
+<img width="1378" height="652" alt="Screenshot 2025-11-27 at 16 56 47" src="https://github.com/user-attachments/assets/40c40e43-a89e-4fd6-924d-9124c99cb6e7" />
 
 ### Shop Floor Interface
+
+<img width="1368" height="658" alt="Screenshot 2025-11-27 at 16 57 39" src="https://github.com/user-attachments/assets/b1fb7a46-822f-4653-9fc1-7aab89daa714" />
+
+
+### Production Dashboard
+
+<img width="1372" height="634" alt="Screenshot 2025-11-27 at 16 57 59" src="https://github.com/user-attachments/assets/7838c7ad-2f4e-48f8-8fce-75426ba1122a" />
 
 ## Tech Stack
 
