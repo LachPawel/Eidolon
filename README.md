@@ -1,5 +1,9 @@
 # Project Eidolon
 
+[![Storybook](https://raw.githubusercontent.com/storybookjs/brand/master/badge/badge-storybook.svg)](https://69285fb878dfda69d1a3ef3b-blncxymmov.chromatic.com/)
+[![Frontend Tests](https://github.com/LachPawel/Eidolon/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/LachPawel/Eidolon/actions/workflows/frontend-tests.yml)
+[![Backend Tests](https://github.com/LachPawel/Eidolon/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/LachPawel/Eidolon/actions/workflows/backend-tests.yml)
+
 ### Overview
 
 The core idea is to create a platform for managing various articles across different industries. Companies should have the availability to define and configure their own articles as these can vary significantly between industries. 
