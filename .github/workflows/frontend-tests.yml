@@ -37,4 +37,6 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run unit tests
-        run: pnpm test -- --run --exclude "**/*.stories.tsx"
+        run: pnpm vitest run --reporter=verbose
+        env:
+          VITEST_BROWSER: false
