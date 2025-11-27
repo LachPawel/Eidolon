@@ -10,7 +10,7 @@
  * - Pagination (cursor-based)
  */
 
-import { expect } from "chai";
+import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createTestApp } from "../app.js";
 import { cleanDatabase } from "../setup.js";
@@ -27,8 +27,8 @@ describe("TRPC Articles Router", () => {
       const res = await request(app).get("/trpc/articles.list").expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.items).to.be.an("array");
-      expect(result.items.length).to.equal(0);
+      expect(Array.isArray(result.items)).toBe(true);
+      expect(result.items.length).toBe(0);
     });
 
     it("should return articles with pagination", async () => {
@@ -48,8 +48,8 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.items).to.have.lengthOf(3);
-      expect(result.nextCursor).to.exist;
+      expect(result.items).toHaveLength(3);
+      expect(result.nextCursor).toBeDefined();
     });
 
     it("should filter by organization via TRPC", async () => {
@@ -69,8 +69,8 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.items).to.have.lengthOf(1);
-      expect(result.items[0].organization).to.equal("Corp A");
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].organization).toBe("Corp A");
     });
 
     it("should filter by status via TRPC", async () => {
@@ -87,8 +87,8 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.items).to.have.lengthOf(1);
-      expect(result.items[0].status).to.equal("draft");
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].status).toBe("draft");
     });
 
     it("should search articles via TRPC", async () => {
@@ -105,8 +105,8 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.items).to.have.lengthOf(1);
-      expect(result.items[0].name).to.include("Steel");
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].name).toContain("Steel");
     });
   });
 
@@ -122,9 +122,9 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.id).to.exist;
-      expect(result.name).to.equal("TRPC Article");
-      expect(result.organization).to.equal("TRPC Corp");
+      expect(result.id).toBeDefined();
+      expect(result.name).toBe("TRPC Article");
+      expect(result.organization).toBe("TRPC Corp");
     });
 
     it("should create article with attribute fields via TRPC", async () => {
@@ -147,7 +147,7 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.id).to.exist;
+      expect(result.id).toBeDefined();
     });
 
     it("should validate required fields via TRPC", async () => {
@@ -160,7 +160,7 @@ describe("TRPC Articles Router", () => {
         })
         .expect(400);
 
-      expect(res.body.error).to.exist;
+      expect(res.body.error).toBeDefined();
     });
   });
 
@@ -186,7 +186,7 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.success).to.equal(true);
+      expect(result.success).toBe(true);
     });
   });
 
@@ -208,11 +208,11 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.success).to.equal(true);
+      expect(result.success).toBe(true);
 
       // Verify deletion
       const getRes = await request(app).get("/api/articles").expect(200);
-      expect(getRes.body.articles).to.have.lengthOf(0);
+      expect(getRes.body.articles).toHaveLength(0);
     });
   });
 
@@ -235,8 +235,8 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result.id).to.equal(articleId);
-      expect(result.name).to.equal("Test Article");
+      expect(result.id).toBe(articleId);
+      expect(result.name).toBe("Test Article");
     });
 
     it("should return null for non-existent article via TRPC", async () => {
@@ -245,7 +245,7 @@ describe("TRPC Articles Router", () => {
         .expect(200);
 
       const result = JSON.parse(res.text).result.data;
-      expect(result).to.equal(null);
+      expect(result).toBeNull();
     });
   });
 });

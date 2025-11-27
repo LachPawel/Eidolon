@@ -49,3 +49,9 @@ export interface EntryValueData {
 }
 
 export type EntryValueUnion = string | number | boolean;
+
+export type ProductionEntry = {
+  article: string;
+  status: string;
+  quantity: number;
+};

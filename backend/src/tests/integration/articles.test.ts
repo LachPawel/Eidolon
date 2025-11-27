@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createTestApp } from "../app.js";
 import { cleanDatabase } from "../setup.js";
@@ -29,9 +29,9 @@ describe("Articles API", () => {
 
       const res = await request(app).post("/api/articles").send(articleData).expect(201);
 
-      expect(res.body).to.have.property("id");
-      expect(res.body.name).to.equal("Test Article");
-      expect(res.body.organization).to.equal("Test Corp");
+      expect(res.body).toHaveProperty("id");
+      expect(res.body.name).toBe("Test Article");
+      expect(res.body.organization).toBe("Test Corp");
     });
 
     it("should return 400 if name is missing", async () => {
@@ -40,7 +40,7 @@ describe("Articles API", () => {
         .send({ organization: "Test Corp" })
         .expect(400);
 
-      expect(res.body.error).to.equal("Organization and Name are required");
+      expect(res.body.error).toBe("Organization and Name are required");
     });
   });
 
@@ -48,7 +48,8 @@ describe("Articles API", () => {
     it("should return empty array when no articles exist", async () => {
       const res = await request(app).get("/api/articles").expect(200);
 
-      expect(res.body.articles).to.be.an("array").that.is.empty;
+      expect(Array.isArray(res.body.articles)).toBe(true);
+      expect(res.body.articles).toHaveLength(0);
     });
 
     it("should filter articles by organization", async () => {
@@ -59,8 +60,8 @@ describe("Articles API", () => {
 
       const res = await request(app).get("/api/articles?organization=Corp A").expect(200);
 
-      expect(res.body.articles).to.have.lengthOf(1);
-      expect(res.body.articles[0].organization).to.equal("Corp A");
+      expect(res.body.articles).toHaveLength(1);
+      expect(res.body.articles[0].organization).toBe("Corp A");
     });
 
     it("should search articles by name", async () => {
@@ -70,8 +71,8 @@ describe("Articles API", () => {
 
       const res = await request(app).get("/api/articles?search=Pipe").expect(200);
 
-      expect(res.body.articles).to.have.lengthOf(1);
-      expect(res.body.articles[0].name).to.include("Pipe");
+      expect(res.body.articles).toHaveLength(1);
+      expect(res.body.articles[0].name).toContain("Pipe");
     });
   });
 });

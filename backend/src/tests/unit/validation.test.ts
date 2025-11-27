@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { describe, it, expect } from "vitest";
 import { validateFields } from "../../utils/validation.js";
 import { FieldDefinition } from "../../types/index.js";
 

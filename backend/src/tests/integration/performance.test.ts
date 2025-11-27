@@ -1,5 +1,4 @@
-import { describe, it, before, after } from "mocha";
-import { expect } from "chai";
+import { describe, it, beforeAll, afterAll, expect } from "vitest";
 import { db } from "../../db/index.js";
 import { articles } from "../../db/schema.js";
 import { ilike } from "drizzle-orm";
@@ -14,7 +13,7 @@ import {
 
 describe("Search Performance Comparison", function () {
   // Increase timeout for API calls
-  this.timeout(30000);
+  // this.timeout(30000);
 
   const testQueries = [
     "Steel",
@@ -29,7 +28,7 @@ describe("Search Performance Comparison", function () {
     "Component",
   ];
 
-  before(async function () {
+  beforeAll(async function () {
     // Clear previous metrics
     clearMetrics();
     console.log("\n=== Search Performance Test ===\n");
@@ -37,7 +36,7 @@ describe("Search Performance Comparison", function () {
     console.log("Pinecone configured:", isPineconeConfigured());
   });
 
-  after(function () {
+  afterAll(function () {
     // Print final report
     const report = generateBenchmarkReport();
     console.log("\n" + report.summary);
@@ -64,8 +63,8 @@ describe("Search Performance Comparison", function () {
           { query }
         );
 
-        expect(metrics.durationMs).to.be.a("number");
-        expect(metrics.durationMs).to.be.greaterThan(0);
+        expect(typeof metrics.durationMs).toBe("number");
+        expect(metrics.durationMs).toBeGreaterThan(0);
       }
 
       const stats = compareSearchPerformance();
@@ -75,15 +74,15 @@ describe("Search Performance Comparison", function () {
       console.log(`  Max: ${stats.postgres.maxMs.toFixed(2)}ms`);
       console.log(`  P95: ${stats.postgres.p95Ms.toFixed(2)}ms`);
 
-      expect(stats.postgres.count).to.equal(testQueries.length);
+      expect(stats.postgres.count).toBe(testQueries.length);
     });
   });
 
   describe("Algolia Search", function () {
-    it("should measure Algolia search performance", async function () {
+    it("should measure Algolia search performance", async function (ctx) {
       if (!isAlgoliaConfigured()) {
         console.log("  Skipping - Algolia not configured");
-        this.skip();
+        ctx.skip();
         return;
       }
 
@@ -92,8 +91,8 @@ describe("Search Performance Comparison", function () {
           query,
         });
 
-        expect(metrics.durationMs).to.be.a("number");
-        expect(metrics.durationMs).to.be.greaterThan(0);
+        expect(typeof metrics.durationMs).toBe("number");
+        expect(metrics.durationMs).toBeGreaterThan(0);
       }
 
       const stats = compareSearchPerformance();
@@ -103,38 +102,42 @@ describe("Search Performance Comparison", function () {
       console.log(`  Max: ${stats.algolia.maxMs.toFixed(2)}ms`);
       console.log(`  P95: ${stats.algolia.p95Ms.toFixed(2)}ms`);
 
-      expect(stats.algolia.count).to.equal(testQueries.length);
+      expect(stats.algolia.count).toBe(testQueries.length);
     });
   });
 
   describe("Pinecone Semantic Search", function () {
-    it("should measure Pinecone semantic search performance", async function () {
-      if (!isPineconeConfigured()) {
-        console.log("  Skipping - Pinecone not configured");
-        this.skip();
-        return;
+    it(
+      "should measure Pinecone semantic search performance",
+      { timeout: 30000 },
+      async function (ctx) {
+        if (!isPineconeConfigured()) {
+          console.log("  Skipping - Pinecone not configured");
+          ctx.skip();
+          return;
+        }
+
+        for (const query of testQueries) {
+          const { metrics } = await measurePerformance(
+            "pinecone-search",
+            () => findSimilarArticles(query, undefined, 5),
+            { query }
+          );
+
+          expect(typeof metrics.durationMs).toBe("number");
+          expect(metrics.durationMs).toBeGreaterThan(0);
+        }
+
+        const stats = compareSearchPerformance();
+        console.log(`\nPinecone - ${stats.pinecone.count} queries:`);
+        console.log(`  Avg: ${stats.pinecone.avgMs.toFixed(2)}ms`);
+        console.log(`  Min: ${stats.pinecone.minMs.toFixed(2)}ms`);
+        console.log(`  Max: ${stats.pinecone.maxMs.toFixed(2)}ms`);
+        console.log(`  P95: ${stats.pinecone.p95Ms.toFixed(2)}ms`);
+
+        expect(stats.pinecone.count).toBe(testQueries.length);
       }
-
-      for (const query of testQueries) {
-        const { metrics } = await measurePerformance(
-          "pinecone-search",
-          () => findSimilarArticles(query, undefined, 5),
-          { query }
-        );
-
-        expect(metrics.durationMs).to.be.a("number");
-        expect(metrics.durationMs).to.be.greaterThan(0);
-      }
-
-      const stats = compareSearchPerformance();
-      console.log(`\nPinecone - ${stats.pinecone.count} queries:`);
-      console.log(`  Avg: ${stats.pinecone.avgMs.toFixed(2)}ms`);
-      console.log(`  Min: ${stats.pinecone.minMs.toFixed(2)}ms`);
-      console.log(`  Max: ${stats.pinecone.maxMs.toFixed(2)}ms`);
-      console.log(`  P95: ${stats.pinecone.p95Ms.toFixed(2)}ms`);
-
-      expect(stats.pinecone.count).to.equal(testQueries.length);
-    });
+    );
   });
 
   describe("Performance Comparison", function () {

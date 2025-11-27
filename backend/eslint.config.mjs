@@ -11,6 +11,7 @@ export default [
       'coverage/**',
       'drizzle.config.ts',
       'drizzle.config.test.ts',
+      'vitest.config.ts',
       '*.js',
       '*.mjs',
       '*.cjs',
