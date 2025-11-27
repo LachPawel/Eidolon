@@ -6,5 +6,6 @@ export default defineConfig({
     exclude: ["dist/**", "node_modules/**", "drizzle.config.test.ts"],
     testTimeout: 30000,
     hookTimeout: 30000,
+    setupFiles: ["./src/tests/env-setup.ts"],
   },
 });
