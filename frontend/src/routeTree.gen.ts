@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShopfloorRouteImport } from './routes/shopfloor'
+import { Route as ProductionRouteImport } from './routes/production'
 import { Route as ArticlesRouteImport } from './routes/articles'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ShopfloorRoute = ShopfloorRouteImport.update({
   id: '/shopfloor',
   path: '/shopfloor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductionRoute = ProductionRouteImport.update({
+  id: '/production',
+  path: '/production',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArticlesRoute = ArticlesRouteImport.update({
@@ -32,30 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/articles': typeof ArticlesRoute
+  '/production': typeof ProductionRoute
   '/shopfloor': typeof ShopfloorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/articles': typeof ArticlesRoute
+  '/production': typeof ProductionRoute
   '/shopfloor': typeof ShopfloorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/articles': typeof ArticlesRoute
+  '/production': typeof ProductionRoute
   '/shopfloor': typeof ShopfloorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/articles' | '/shopfloor'
+  fullPaths: '/' | '/articles' | '/production' | '/shopfloor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/articles' | '/shopfloor'
-  id: '__root__' | '/' | '/articles' | '/shopfloor'
+  to: '/' | '/articles' | '/production' | '/shopfloor'
+  id: '__root__' | '/' | '/articles' | '/production' | '/shopfloor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArticlesRoute: typeof ArticlesRoute
+  ProductionRoute: typeof ProductionRoute
   ShopfloorRoute: typeof ShopfloorRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/shopfloor'
       fullPath: '/shopfloor'
       preLoaderRoute: typeof ShopfloorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/production': {
+      id: '/production'
+      path: '/production'
+      fullPath: '/production'
+      preLoaderRoute: typeof ProductionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/articles': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArticlesRoute: ArticlesRoute,
+  ProductionRoute: ProductionRoute,
   ShopfloorRoute: ShopfloorRoute,
 }
 export const routeTree = rootRouteImport

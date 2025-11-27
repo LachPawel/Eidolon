@@ -31,6 +31,12 @@ export const Route = createRootRoute({
                 >
                   Shop Floor
                 </Link>
+                <Link
+                  to="/production"
+                  className="text-zinc-500 hover:text-zinc-900 transition-colors [&.active]:text-zinc-900 [&.active]:font-semibold"
+                >
+                  Production
+                </Link>
               </nav>
             </div>
           </div>
