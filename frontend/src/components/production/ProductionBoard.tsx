@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/trpc";
-import { Sparkles } from "lucide-react";
+import { AutoScheduleButton } from "./AutoScheduleButton";
 
 const COLUMNS = ["PREPARATION", "IN PRODUCTION", "READY"];
 const COLUMN_WIDTH_PERCENT = 1 / 3;
@@ -505,24 +505,8 @@ export function ProductionBoard() {
   return (
     <div className="relative w-full h-full">
       {/* AI Optimize Button */}
-      <div className="absolute top-1 right-4 z-10">
-        <button
-          onClick={handleOptimize}
-          disabled={optimizeSchedule.isPending}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-xl shadow-sm hover:bg-zinc-800 transition-all font-medium text-xs uppercase tracking-wider border border-zinc-900"
-        >
-          {optimizeSchedule.isPending ? (
-            <>
-              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Optimizing...
-            </>
-          ) : (
-            <>
-              <Sparkles size={14} />
-              Auto-Schedule
-            </>
-          )}
-        </button>
+      <div className="absolute top-4 right-4 z-10">
+        <AutoScheduleButton onClick={handleOptimize} isPending={optimizeSchedule.isPending} />
       </div>
 
       <div ref={containerRef} className="w-full h-full bg-white overflow-y-auto">
