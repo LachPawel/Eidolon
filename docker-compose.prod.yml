@@ -16,6 +16,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -24,15 +36,37 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER:-eidolon}:${POSTGRES_PASSWORD:-eidolon}@postgres:5432/${POSTGRES_DB:-eidolon}
+      REDIS_URL: redis://redis:6379
       ALGOLIA_APP_ID: ${ALGOLIA_APP_ID}
       ALGOLIA_ADMIN_KEY: ${ALGOLIA_ADMIN_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     expose:
       - "3000"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: node --import ./dist/instrument.js dist/workers/streamWorker.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-eidolon}:${POSTGRES_PASSWORD:-eidolon}@postgres:5432/${POSTGRES_DB:-eidolon}
+      REDIS_URL: redis://redis:6379
+      ALGOLIA_APP_ID: ${ALGOLIA_APP_ID}
+      ALGOLIA_ADMIN_KEY: ${ALGOLIA_ADMIN_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build:
@@ -48,3 +82,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
