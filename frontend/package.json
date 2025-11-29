@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && pnpm sentry:sourcemaps || true",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org arpl-tm --project eidolon-frontend ./dist && sentry-cli sourcemaps upload --org arpl-tm --project eidolon-frontend ./dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sentry/react": "^10.27.0",
     "@tanstack/react-query": "^5.90.10",
     "@tanstack/react-router": "^1.139.3",
     "@trpc/client": "^11.7.2",
@@ -39,6 +41,7 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
     "@eslint/js": "^9.39.1",
+    "@sentry/cli": "^2.58.2",
     "@storybook/addon-a11y": "^10.1.0",
     "@storybook/addon-docs": "^10.1.0",
     "@storybook/addon-onboarding": "^10.1.0",
