@@ -3,26 +3,32 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy backend package.json and use npm (simpler for Docker)
-COPY backend/package.json ./
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package files from backend
+COPY backend/package.json backend/pnpm-lock.yaml ./
 
 # Install ALL dependencies (including devDependencies for build)
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
 # Copy backend source code
 COPY backend/ ./
 
 # Build TypeScript
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copy package.json and install production deps only
-COPY backend/package.json ./
-RUN npm install --omit=dev
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package.json and lockfile, install production deps only
+COPY backend/package.json backend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
