@@ -13,7 +13,7 @@ Sentry.init({
   // enableLogs: true,
 
   // Tracing - capture 100% in dev, reduce in production
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 1.0,
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.8 : 1.0,
 
   // Profiling
   profileSessionSampleRate: 1.0,
