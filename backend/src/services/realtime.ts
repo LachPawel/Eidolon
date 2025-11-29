@@ -25,8 +25,11 @@ export interface ProductionEvent {
 // ============================================
 
 const PRESENCE_KEY = "presence:production";
-const PRESENCE_TTL = 60; // 60 seconds
+const PRESENCE_TTL = 120; // 2 minutes (longer than heartbeat interval)
 const PRODUCTION_CHANNEL = "production:events";
+
+// In-memory fallback when Redis is not available
+const inMemoryPresence = new Map<string, PresenceUser>();
 
 // ============================================
 // SOCKET.IO SERVER
@@ -60,11 +63,19 @@ export function initializeSocketIO(
       // Add to presence
       await addPresence(socket.id, userData.userName);
 
-      // Broadcast updated presence list
+      // Broadcast updated presence list to ALL in room
       const presence = await getPresence();
       io?.to("production").emit("presence:update", presence);
 
-      console.log(`[Socket.IO] ${socket.id} joined production room`);
+      console.log(
+        `[Socket.IO] ${socket.id} joined production room. Active users: ${presence.length}`
+      );
+    });
+
+    // Handle explicit request for presence (for initial sync)
+    socket.on("get:presence", async () => {
+      const presence = await getPresence();
+      socket.emit("presence:update", presence);
     });
 
     // Handle leaving production room
@@ -74,6 +85,9 @@ export function initializeSocketIO(
 
       const presence = await getPresence();
       io?.to("production").emit("presence:update", presence);
+      console.log(
+        `[Socket.IO] ${socket.id} left production room. Active users: ${presence.length}`
+      );
     });
 
     // Handle disconnect
@@ -83,7 +97,9 @@ export function initializeSocketIO(
       const presence = await getPresence();
       io?.to("production").emit("presence:update", presence);
 
-      console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
+      console.log(
+        `[Socket.IO] Client disconnected: ${socket.id}. Active users: ${presence.length}`
+      );
     });
 
     // Heartbeat to keep presence alive
@@ -105,23 +121,34 @@ export function initializeSocketIO(
 
 async function addPresence(socketId: string, userName?: string): Promise<void> {
   const client = getRedisClient();
-  if (!client) return;
+  const user: PresenceUser = {
+    socketId: socketId,
+    userName: userName,
+    joinedAt: Date.now(),
+  };
+
+  if (!client) {
+    // Fallback to in-memory
+    inMemoryPresence.set(socketId, user);
+    return;
+  }
 
   try {
-    const user: PresenceUser = {
-      socketId: socketId,
-      userName: userName,
-      joinedAt: Date.now(),
-    };
     await client.hset(PRESENCE_KEY, socketId, JSON.stringify(user));
     await client.expire(PRESENCE_KEY, PRESENCE_TTL * 2);
   } catch (error) {
     console.error("[Presence] Error adding presence:", error);
+    // Fallback to in-memory on error
+    inMemoryPresence.set(socketId, user);
   }
 }
 
 async function removePresence(socketId: string): Promise<void> {
   const client = getRedisClient();
+
+  // Always remove from in-memory
+  inMemoryPresence.delete(socketId);
+
   if (!client) return;
 
   try {
@@ -133,6 +160,14 @@ async function removePresence(socketId: string): Promise<void> {
 
 async function refreshPresence(socketId: string): Promise<void> {
   const client = getRedisClient();
+
+  // Update in-memory if exists
+  const inMemUser = inMemoryPresence.get(socketId);
+  if (inMemUser) {
+    inMemUser.joinedAt = Date.now();
+    inMemoryPresence.set(socketId, inMemUser);
+  }
+
   if (!client) return;
 
   try {
@@ -141,6 +176,7 @@ async function refreshPresence(socketId: string): Promise<void> {
       const user = JSON.parse(existing) as PresenceUser;
       user.joinedAt = Date.now();
       await client.hset(PRESENCE_KEY, socketId, JSON.stringify(user));
+      await client.expire(PRESENCE_KEY, PRESENCE_TTL * 2);
     }
   } catch (error) {
     console.error("[Presence] Error refreshing presence:", error);
@@ -149,11 +185,23 @@ async function refreshPresence(socketId: string): Promise<void> {
 
 export async function getPresence(): Promise<PresenceUser[]> {
   const client = getRedisClient();
-  if (!client) return [];
+  const now = Date.now();
+
+  if (!client) {
+    // Return from in-memory, filtering stale entries
+    const users: PresenceUser[] = [];
+    for (const [socketId, user] of inMemoryPresence.entries()) {
+      if (now - user.joinedAt < PRESENCE_TTL * 1000) {
+        users.push(user);
+      } else {
+        inMemoryPresence.delete(socketId);
+      }
+    }
+    return users;
+  }
 
   try {
     const all = await client.hgetall(PRESENCE_KEY);
-    const now = Date.now();
     const users: PresenceUser[] = [];
 
     for (const [socketId, data] of Object.entries(all)) {
@@ -175,7 +223,10 @@ export async function getPresence(): Promise<PresenceUser[]> {
     return users;
   } catch (error) {
     console.error("[Presence] Error getting presence:", error);
-    return [];
+    // Fallback to in-memory on error
+    return Array.from(inMemoryPresence.values()).filter(
+      (u) => now - u.joinedAt < PRESENCE_TTL * 1000
+    );
   }
 }
 
