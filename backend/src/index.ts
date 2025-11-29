@@ -55,7 +55,6 @@ app.use("/api/entries", entriesRouter);
 
 Sentry.setupExpressErrorHandler(app);
 
-// Initialize Redis, Streams, and Socket.IO
 async function startServer() {
   try {
     // Connect to Redis if configured
