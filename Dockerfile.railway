@@ -9,8 +9,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy package files from backend
 COPY backend/package.json backend/pnpm-lock.yaml ./
 
-# Install ALL dependencies (including devDependencies for build)
-RUN pnpm install --frozen-lockfile
+# Install ALL dependencies (including devDependencies for build), skip prepare script
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy backend source code
 COPY backend/ ./
@@ -26,9 +26,9 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy package.json and lockfile, install production deps only
+# Copy package.json and lockfile, install production deps only, skip prepare script
 COPY backend/package.json backend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
