@@ -23,6 +23,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  build: {
+    sourcemap: true, // Generate source maps for Sentry
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

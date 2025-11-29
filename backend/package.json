@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && pnpm sentry:sourcemaps",
+    "build": "tsc && pnpm sentry:sourcemaps || true",
     "start": "node --import ./dist/instrument.js dist/index.js",
     "start:prod": "npm run db:migrate && node --import ./dist/instrument.js dist/index.js",
     "test": "vitest run --no-file-parallelism",

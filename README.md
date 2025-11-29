@@ -5,7 +5,9 @@
     <strong>A Next-Generation Manufacturing Execution System (MES)</strong>
   </p>
   <p>
-    <a href="https://https://eidolon.up.railway.app/">View Demo</a>
+    <a href="https://eidolon.up.railway.app/">View Demo</a>
+    ·
+    <a href="https://eidolon-staging.up.railway.app/">Staging</a>
     ·
     <a href="#features">Features</a>
     ·
@@ -66,6 +68,7 @@ Eidolon follows a modern, scalable architecture separating concerns between a re
 -   **Frontend**: React, Vite, TypeScript, Tailwind CSS, TanStack Router, Framer Motion, Storybook.
 -   **Backend**: Node.js, Express, tRPC, Drizzle ORM, PostgreSQL, OpenAI, Algolia, Pinecone.
 -   **DevOps**: Docker, Railway, GitHub Actions.
+-   **Monitoring**: Sentry (error tracking, performance monitoring, session replay).
 
 ## Development Journey (Chapters)
 
@@ -141,6 +144,38 @@ This repo is divided into various branches, each representing a different chapte
     - Set up CI/CD pipelines for automated testing and deployment.
     - Deploy the backend and frontend to a railway.app
     - Chromatic integration for Storybook deployment.
+
+- Chapter 13: The Observability - Monitoring with Sentry
+    - Integrate Sentry for error tracking and performance monitoring.
+    - Set up source maps for readable stack traces in production.
+    - Configure environment-based sample rates (production vs staging).
+    - Add session replay for frontend debugging.
+    - Implement profiling for backend performance analysis.
+
+## Environments & Git Workflow
+
+Eidolon follows a two-branch deployment strategy:
+
+| Branch | Environment | Frontend URL | Description |
+|--------|-------------|--------------|-------------|
+| `main` | Production | [eidolon.up.railway.app](https://eidolon.up.railway.app/) | Stable releases only |
+| `dev` | Staging | [eidolon-staging.up.railway.app](https://eidolon-staging.up.railway.app/) | Testing & development |
+
+### Workflow
+
+1. **Feature Development**: Create feature branches from `dev`
+2. **Testing**: Merge features into `dev` → automatically deploys to staging
+3. **Release**: Create PR from `dev` to `main` → review → merge → deploys to production
+
+### Sentry Monitoring
+
+Both environments are monitored with Sentry with different sample rates:
+
+| Metric | Production | Staging |
+|--------|------------|---------|
+| Error Tracking | 100% | 100% |
+| Performance Traces | 20% | 100% |
+| Session Replay | 10% | 50% |
 
 ### Requirements (Tested on macOS)
 
