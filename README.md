@@ -65,10 +65,10 @@ Eidolon follows a modern, scalable architecture separating concerns between a re
 
 ## Tech Stack
 
--   **Frontend**: React, Vite, TypeScript, Tailwind CSS, TanStack Router, Framer Motion, Storybook.
--   **Backend**: Node.js, Express, tRPC, Drizzle ORM, PostgreSQL, OpenAI, Algolia, Pinecone.
--   **DevOps**: Docker, Railway, GitHub Actions.
--   **Monitoring**: Sentry (error tracking, performance monitoring, session replay).
+-   **Frontend**: React, Vite, TypeScript, Tailwind CSS, TanStack Router, Framer Motion, Storybook
+-   **Backend**: Node.js, Express, tRPC, Drizzle ORM, PostgreSQL, OpenAI, Algolia, Pinecone, Redis
+-   **DevOps**: Docker, Railway, GitHub Actions
+-   **Monitoring**: Sentry (error tracking, performance monitoring, session replay)
 
 ## Development Journey (Chapters)
 
@@ -151,6 +151,11 @@ This repo is divided into various branches, each representing a different chapte
     - Configure environment-based sample rates (production vs staging).
     - Add session replay for frontend debugging.
     - Implement profiling for backend performance analysis.
+
+- Chapter 14: The Cache - Implementing Caching with Redis
+    - Integrate Redis for caching frequently accessed data.
+    - Use Redis streams for background task processing.
+    - Optimize performance with caching strategies.
 
 ## Environments & Git Workflow
 
