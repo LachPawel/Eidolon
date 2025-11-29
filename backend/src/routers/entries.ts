@@ -6,6 +6,7 @@ import { entries, entryValues, articles } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { validateFields } from "../utils/validation.js";
 import type { FieldDefinition } from "../types/index.js";
+import { ProductionEvents } from "../services/realtime.js";
 
 export const entriesRouter = router({
   list: publicProcedure
@@ -104,6 +105,11 @@ export const entriesRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      // Get current entry to detect status change
+      const currentEntry = await db.query.entries.findFirst({
+        where: eq(entries.id, input.id),
+      });
+
       const [updatedEntry] = await db
         .update(entries)
         .set({
@@ -113,6 +119,20 @@ export const entriesRouter = router({
         })
         .where(eq(entries.id, input.id))
         .returning();
+
+      // Broadcast real-time update
+      if (input.status && currentEntry && currentEntry.status !== input.status) {
+        // Status changed - broadcast status change event
+        ProductionEvents.statusChanged(input.id, currentEntry.status, input.status).catch((err) =>
+          console.error("[Realtime] Failed to broadcast:", err)
+        );
+      } else {
+        // General update
+        ProductionEvents.entryUpdated(input.id, {
+          quantity: updatedEntry.quantity,
+          status: updatedEntry.status,
+        }).catch((err) => console.error("[Realtime] Failed to broadcast:", err));
+      }
 
       return updatedEntry;
     }),
@@ -209,6 +229,13 @@ export const entriesRouter = router({
             valueBoolean,
           });
         }
+
+        // Broadcast real-time event for new entry
+        ProductionEvents.entryCreated(newEntry.id, {
+          articleId: newEntry.articleId,
+          quantity: newEntry.quantity,
+          status: newEntry.status,
+        }).catch((err) => console.error("[Realtime] Failed to broadcast:", err));
 
         return newEntry;
       });
