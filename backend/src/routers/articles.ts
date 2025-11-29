@@ -28,6 +28,15 @@ import {
   getRecentMetricsSummary,
   exportMetrics,
 } from "../services/performance.js";
+import {
+  cacheGet,
+  cacheSet,
+  cacheDelete,
+  cacheDeletePattern,
+  CacheKeys,
+  CacheTTL,
+} from "../services/redis.js";
+import { Tasks } from "../services/streams.js";
 
 const fieldValidationSchema = z
   .object({
@@ -212,27 +221,45 @@ export const articlesRouter = router({
           }
         }
 
-        // Sync to search services (non-blocking)
-        const fieldDefsForSync = allFields.map((f) => ({
-          fieldKey: f.fieldKey,
-          fieldLabel: f.fieldLabel,
-          fieldType: f.fieldType,
-        }));
+        // Sync to search services via async queue (non-blocking)
+        // Use queue if available, otherwise sync directly
+        const useQueue = process.env.REDIS_URL;
 
-        syncArticleToAlgolia({
-          id: newArticle.id,
-          name: newArticle.name,
-          organization: newArticle.organization,
-          status: newArticle.status,
-          fieldDefinitions: fieldDefsForSync,
-        }).catch((err) => console.error("[Algolia] Sync error:", err));
+        if (useQueue) {
+          // Queue for async processing
+          Tasks.syncToAlgolia(newArticle.id).catch((err) =>
+            console.error("[Queue] Failed to queue Algolia sync:", err)
+          );
+          Tasks.syncToPinecone(
+            newArticle.id,
+            `${newArticle.name} ${newArticle.organization}`
+          ).catch((err) => console.error("[Queue] Failed to queue Pinecone sync:", err));
+        } else {
+          // Sync directly (non-blocking)
+          const fieldDefsForSync = allFields.map((f) => ({
+            fieldKey: f.fieldKey,
+            fieldLabel: f.fieldLabel,
+            fieldType: f.fieldType,
+          }));
 
-        indexArticle({
-          id: newArticle.id,
-          name: newArticle.name,
-          organization: newArticle.organization,
-          fieldDefinitions: fieldDefsForSync,
-        }).catch((err) => console.error("[Pinecone] Index error:", err));
+          syncArticleToAlgolia({
+            id: newArticle.id,
+            name: newArticle.name,
+            organization: newArticle.organization,
+            status: newArticle.status,
+            fieldDefinitions: fieldDefsForSync,
+          }).catch((err) => console.error("[Algolia] Sync error:", err));
+
+          indexArticle({
+            id: newArticle.id,
+            name: newArticle.name,
+            organization: newArticle.organization,
+            fieldDefinitions: fieldDefsForSync,
+          }).catch((err) => console.error("[Pinecone] Index error:", err));
+        }
+
+        // Invalidate article list cache
+        await cacheDeletePattern("articles:*");
 
         return newArticle;
       });
@@ -337,12 +364,27 @@ export const articlesRouter = router({
           }
         }
 
+        // Invalidate caches
+        await cacheDelete(CacheKeys.article(input.id));
+        await cacheDeletePattern("articles:*");
+
+        // Re-sync to search services
+        if (process.env.REDIS_URL) {
+          Tasks.syncToAlgolia(input.id).catch((err) =>
+            console.error("[Queue] Failed to queue Algolia sync:", err)
+          );
+        }
+
         return { success: true };
       });
     }),
 
   delete: publicProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     await db.delete(articles).where(eq(articles.id, input.id));
+
+    // Invalidate caches
+    await cacheDelete(CacheKeys.article(input.id));
+    await cacheDeletePattern("articles:*");
 
     // Remove from search services (non-blocking)
     deleteArticleFromAlgolia(input.id).catch((err) =>
@@ -356,6 +398,15 @@ export const articlesRouter = router({
   }),
 
   getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const cacheKey = CacheKeys.article(input.id);
+
+    // Try cache first
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      console.log(`[Cache] Hit for article ${input.id}`);
+      return cached;
+    }
+
     const article = await db.query.articles.findFirst({
       where: eq(articles.id, input.id),
       with: {
@@ -371,7 +422,7 @@ export const articlesRouter = router({
       return null;
     }
 
-    return {
+    const result = {
       id: article.id,
       name: article.name,
       organization: article.organization,
@@ -413,6 +464,11 @@ export const articlesRouter = router({
       createdAt: article.createdAt,
       updatedAt: article.updatedAt,
     };
+
+    // Cache the result
+    await cacheSet(cacheKey, result, { ttl: CacheTTL.article });
+
+    return result;
   }),
 
   // ============================================
