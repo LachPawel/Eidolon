@@ -1,5 +1,6 @@
 import "./instrument.js";
 import * as Sentry from "@sentry/node";
+import { createServer } from "http";
 
 import express from "express";
 import cors from "cors";
@@ -10,8 +11,10 @@ import { appRouter } from "./routers/index.js";
 import { createContext } from "./trpc.js";
 import { connectRedis, getRedisClient } from "./services/redis.js";
 import { initializeStreams, getStreamStats } from "./services/streams.js";
+import { initializeSocketIO, getPresence } from "./services/realtime.js";
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
@@ -29,11 +32,13 @@ app.get("/health", async (req, res) => {
   const redis = getRedisClient();
   const redisStatus = redis ? "connected" : "not configured";
   const streamStats = await getStreamStats();
+  const presence = await getPresence();
 
   res.status(200).json({
     status: "OK",
     redis: redisStatus,
     streams: streamStats,
+    activeUsers: presence.length,
   });
 });
 
@@ -50,7 +55,6 @@ app.use("/api/entries", entriesRouter);
 
 Sentry.setupExpressErrorHandler(app);
 
-// Initialize Redis and Streams
 async function startServer() {
   try {
     // Connect to Redis if configured
@@ -62,7 +66,11 @@ async function startServer() {
       console.log("[Server] Redis not configured - caching and queuing disabled");
     }
 
-    app.listen(PORT, () => {
+    // Initialize Socket.IO for real-time features
+    initializeSocketIO(httpServer, allowedOrigins);
+    console.log("[Server] Socket.IO initialized");
+
+    httpServer.listen(PORT, () => {
       console.log(`Server is running on PORT: ${PORT}`);
     });
   } catch (error) {
