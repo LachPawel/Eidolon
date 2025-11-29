@@ -6,17 +6,20 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy package files from backend/
-COPY backend/package.json backend/pnpm-lock.yaml ./
+# Copy workspace config and root lockfile
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+
+# Copy backend package.json
+COPY backend/package.json ./backend/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --filter backend
 
-# Copy source code from backend/
-COPY backend/ .
+# Copy backend source code
+COPY backend/ ./backend/
 
 # Build TypeScript
-RUN pnpm run build
+RUN cd backend && pnpm run build
 
 # Production stage
 FROM node:20-alpine AS runner
@@ -26,20 +29,22 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy package files and install ALL deps (need drizzle-kit for migrations)
-COPY backend/package.json backend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# Copy workspace config and install production deps
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY backend/package.json ./backend/
+RUN pnpm install --frozen-lockfile --filter backend
 
 # Copy built files from builder
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/backend/dist ./dist
 
 # Copy drizzle config and schema for migrations
-COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=builder /app/src/db ./src/db
+COPY --from=builder /app/backend/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/backend/src/db ./src/db
+COPY --from=builder /app/backend/drizzle ./drizzle
 
 # Copy seed files (source needed for tsx)
-COPY --from=builder /app/src/seeds ./src/seeds
-COPY --from=builder /app/src/const ./src/const
+COPY --from=builder /app/backend/src/seeds ./src/seeds
+COPY --from=builder /app/backend/src/const ./src/const
 
 # Set environment
 ENV NODE_ENV=production
