@@ -1,4 +1,6 @@
-import "dotenv/config";
+import "./instrument.js";
+import * as Sentry from "@sentry/node";
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -35,6 +37,8 @@ app.use(
 
 app.use("/api/articles", articlesRouter);
 app.use("/api/entries", entriesRouter);
+
+Sentry.setupExpressErrorHandler(app);
 
 app.listen(PORT, () => {
   console.log(`Server is running on PORT: ${PORT}`);
