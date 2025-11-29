@@ -116,8 +116,9 @@ export async function readTasks(
 
     const tasks: Array<{ id: string; payload: TaskPayload }> = [];
 
-    for (const [, messages] of results) {
-      for (const [id, fields] of messages as Array<[string, string[]]>) {
+    for (const streamData of results as Array<[string, Array<[string, string[]]>]>) {
+      const messages = streamData[1];
+      for (const [id, fields] of messages) {
         try {
           const payloadIndex = fields.indexOf("payload");
           if (payloadIndex !== -1) {
