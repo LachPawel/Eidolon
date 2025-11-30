@@ -9,8 +9,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install ALL dependencies (including devDependencies for build), skip prepare script
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY . .
@@ -26,9 +26,9 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy package files and install ALL deps (need drizzle-kit for migrations)
+# Copy package.json and lockfile, install production deps only, skip prepare script
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
@@ -36,6 +36,7 @@ COPY --from=builder /app/dist ./dist
 # Copy drizzle config and schema for migrations
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/src/db ./src/db
+COPY --from=builder /app/drizzle ./drizzle
 
 # Copy seed files (source needed for tsx)
 COPY --from=builder /app/src/seeds ./src/seeds
